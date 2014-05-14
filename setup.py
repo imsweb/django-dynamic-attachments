@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
-from attachments.version import __version__
+import attachments
 
 setup(
     name='attachments',
-    version=__version__,
+    version=attachments.__version__,
     description='A Django application for handling file uploads and attaching them to arbitrary models.',
     author='Dan Watson',
     author_email='watsond@imsweb.com',
