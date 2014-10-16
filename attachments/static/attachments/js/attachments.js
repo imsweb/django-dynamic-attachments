@@ -100,4 +100,16 @@
             uploadFiles(this.files, this);
         });
     };
+    
+    $('body').on('click', 'a.delete-upload', function() {
+        var row = $(this).parent().parent();
+        $.ajax({
+            type: 'POST',
+            url: $(this).attr('href'),
+            success: function(data) {
+                row.remove();
+            }
+        });
+        return false;
+    });
 }(jQuery));

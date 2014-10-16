@@ -34,6 +34,15 @@ def attach(request, session_id):
             'session': session,
         })
 
+@csrf_exempt
+def delete_upload(request, session_id, upload_id):
+    session = Session.objects.get(uuid=session_id)
+    upload = get_object_or_404(session.uploads, pk=upload_id)
+    upload.delete()
+    return render(request, session.template, {
+        'session': session,
+    })
+
 # TODO: permission checking
 def download(request, attach_id, filename=None):
     attachment = get_object_or_404(Attachment, pk=attach_id)

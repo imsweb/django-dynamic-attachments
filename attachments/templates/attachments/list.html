@@ -3,6 +3,7 @@
         <tr>
             <th>File</th>
             <th>Size</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -10,6 +11,7 @@
             <tr>
                 <td>{{ upload.file_name }}</td>
                 <td>{{ upload.file_size|filesizeformat }}</td>
+                <td><a href="{% url "delete-upload" session_id=session.uuid upload_id=upload.pk %}" class="delete-upload">Remove</a></td>
             </tr>
         {% endfor %}
     </tbody>
