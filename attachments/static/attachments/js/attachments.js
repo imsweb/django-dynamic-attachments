@@ -102,7 +102,7 @@
     };
     
     $('body').on('click', 'a.delete-upload', function() {
-        var row = $(this).parent().parent();
+        var row = $(this).closest('.upload-item');
         $.ajax({
             type: 'POST',
             url: $(this).attr('href'),

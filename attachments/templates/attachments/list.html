@@ -8,7 +8,7 @@
     </thead>
     <tbody>
         {% for upload in session.uploads.all %}
-            <tr>
+            <tr class="upload-item">
                 <td>{{ upload.file_name }}</td>
                 <td>{{ upload.file_size|filesizeformat }}</td>
                 <td><a href="{% url "delete-upload" session_id=session.uuid upload_id=upload.pk %}" class="delete-upload">Remove</a></td>
