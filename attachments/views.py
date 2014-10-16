@@ -38,12 +38,12 @@ def attach(request, session_id):
 def delete_upload(request, session_id, upload_id):
     session = Session.objects.get(uuid=session_id)
     upload = get_object_or_404(session.uploads, pk=upload_id)
+    file_name = upload.file_name
     try:
-        file_name = upload.file_name
         upload.delete()
         return JsonResponse({'ok': True})
     except Exception, ex:
-        logger.exception('Error deleting upload (pk=%s, file_name=%s) from session %s', upload_id, file_name, upsession_id)
+        logger.exception('Error deleting upload (pk=%s, file_name=%s) from session %s', upload_id, file_name, session_id)
         return JsonResponse({'ok': False, 'error': unicode(ex)})
 
 # TODO: permission checking
