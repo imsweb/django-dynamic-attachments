@@ -6,6 +6,7 @@
             url: null,
             container: null,
             dropTarget: null,
+            contentType: null,
             progress: null,
             success: null
         }, options);
@@ -13,6 +14,7 @@
         var refresh = function() {
             return $.ajax({
                 url: settings.url,
+                data: {contentType: settings.contentType},
                 success: function(html) {
                     $(settings.container).empty().append(html);
                 }
@@ -112,4 +114,51 @@
         });
         return false;
     });
+    
+    $("body").on('submit', '.update-attachment', function(e)
+		{
+		    var postData = $(this).serializeArray();
+		    var formURL = $(this).attr("action");
+		    $.ajax(
+		    {
+		        url : formURL,
+		        type: "POST",
+		        data : postData,
+		        success:function(data, textStatus, jqXHR) 
+		        {
+		        	$(".att-prop-saved-alert").show();
+		        	//If we want to hide popup on save sue this
+		        	//$(".popover").hide();
+		        },
+		        error: function(jqXHR, textStatus, errorThrown) 
+		        {
+		        	$(".att-prop-save-failed-alert").show();
+		        }
+		    });
+		    e.preventDefault(); //STOP default action
+		    e.unbind(); //unbind. to stop multiple form submit.
+		});
+		 
 }(jQuery));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

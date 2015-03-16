@@ -1,7 +1,9 @@
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import JsonResponse, StreamingHttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
+
 from .models import Session, Attachment
+from .forms import PropertyForm
 from .utils import get_storage, url_filename
 from .signals import file_uploaded
 from wsgiref.util import FileWrapper
@@ -30,8 +32,10 @@ def attach(request, session_id):
             logger.exception('Error attaching file to session %s', session_id)
             return JsonResponse({'ok': False, 'error': unicode(ex)})
     else:
+        content_type =  request.GET.get('contentType', None)
         return render(request, session.template, {
             'session': session,
+            'content_type': content_type,
         })
 
 @csrf_exempt
@@ -61,3 +65,36 @@ def download(request, attach_id, filename=None):
         filename = url_filename(attachment.file_name)
         response['Content-Disposition'] = "attachment; filename=%s" % filename
     return response
+
+def update_attachment(request, content_type, attach_id):
+    print request.is_ajax()
+    if request.is_ajax() and request.method == 'POST':
+        try:
+            att_instance = Attachment.objects.get(pk=attach_id)
+            kwargs = {'content_type': content_type, 'att_instance': att_instance}
+        
+            property_form = PropertyForm(request.POST, **kwargs)
+            if property_form.is_valid():
+                att_instance.data = att_instance.extract_data(request)
+                att_instance.save()
+            return JsonResponse({'ok': True})
+        except Exception, ex:
+            logger.exception('Error updating attachment (pk=%s, file_name=%s)', attach_id, att_instance.file_name)
+            return JsonResponse({'ok': False, 'error': unicode(ex)})
+
+    raise Http404()
+        
+def show_attachment_properties(request, content_type, attach_id):
+    attachment = get_object_or_404(Attachment, pk=attach_id)
+    return render(request, 'attachments/properties.html', {
+        'content_type': content_type,
+        'att': attachment,
+    })
+     
+    
+    
+    
+    
+    
+    
+    

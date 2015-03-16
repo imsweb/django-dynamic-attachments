@@ -1,0 +1,31 @@
+{% load attachments %}
+
+<div class="popover right">
+       <div class="arrow"></div>
+       <form action="{% url "update-attachment" content_type=content_type attach_id=att.pk %}" method="post" class="update-attachment">
+       	{% csrf_token %}
+        <div class="popover-title">
+            <button type="button" class="close" aria-hidden="true" data-dismiss="popover"><i class="fa fa-times"></i></button>
+            <h4>Edit {{ att.file_name }} Properties</h4>
+        </div>
+        <div class="popover-content">
+        	<table class="table table-borderless table-condensed">
+			    <tbody>
+			        {{ content_type|get_attachment_properties_form:att }}
+			    </tbody>
+			</table>
+        </div>
+        <div class="popover-footer">
+        	<div class="alert alert-success att-prop-saved-alert" style="display:none;">
+				{{ att.file_name }} properties have been saved.
+			</div>
+			<div class="alert alert-danger att-prop-save-failed-alert" style="display:none;">
+				{{ att.file_name }} properties failed to save.
+			</div>
+			<div class="popover-footer-btns">
+            	<button type="button" class="btn btn-default btn-sm" data-dismiss="popover">Cancel</button>
+            	<button type="submit" class="btn btn-primary btn-sm save-properties">Save</button>
+            </div>
+        </div>
+	</form>
+</div>

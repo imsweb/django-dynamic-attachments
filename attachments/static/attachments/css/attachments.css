@@ -1,0 +1,27 @@
+
+.table-borderless tbody tr td, .table-borderless tbody tr th, .table-borderless thead tr th {
+    border: none;
+}
+
+.attachment-files-table .upload-item td {
+	font-weight: bold;
+}
+
+.attachment-files-table label{
+	font-weight: normal;
+	padding-left: 20px;
+}
+
+.popover-footer-btns { padding: 8px 14px; border-top: 1px solid #ebebeb; text-align: right; white-space: nowrap; }
+
+.att-prop-saved-alert { padding: 8px 1px; border-top: 1px solid #ebebeb; text-align: left; white-space: nowrap; }
+
+.att-prop-save-failed-alert { padding: 8px 1px; border-top: 1px solid #ebebeb; text-align: left; white-space: nowrap; }
+
+.att-prop-saved-alert, .popover-footer-btns {
+	display:inline;
+}
+
+.att-prop-save-failed-alert, .popover-footer-btns {
+	display:inline;
+}

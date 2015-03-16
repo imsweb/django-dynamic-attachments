@@ -9,6 +9,20 @@ from django.conf import settings
 from .utils import get_context_key, get_storage, get_default_path, JSONField
 import os
 
+FIELD_TYPE_CHOICES = (
+    ('string', 'Text'),
+    ('text', 'Large Text'),
+    ('integer', 'Integer'),
+    ('decimal', 'Decimal'),
+    ('boolean', 'Boolean'),
+    ('date', 'Date'),
+    ('lookup', 'Lookup (Dropdown)'),
+    ('radio', 'Lookup (Radio)'),
+    ('multi', 'Multi-Value Lookup (Checkboxes)'),
+    ('multilist', 'Multi-Value Lookup (Multi-Select)'),
+    ('email', 'Email Address'),
+)
+
 class Attachment (models.Model):
     file_path = models.TextField(unique=True)
     file_name = models.CharField(max_length=200)
@@ -45,7 +59,27 @@ class Attachment (models.Model):
     def querydata(self):
         from django.utils.datastructures import MultiValueDict
         return MultiValueDict(self.data or {})
+    
+    def extract_data(self, request):
+        data = {}
+        if request and request.POST:
+            prefix = 'attachment-%d-' % self.pk
+            for key in request.POST:
+                if key.startswith(prefix):
+                    data[key[len(prefix):]] = request.POST.getlist(key)
+        return data
 
+
+class Property (models.Model):
+    label = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True, help_text='Must be alphanumeric, with no spaces.')
+    data_type = models.CharField(max_length=20, choices=FIELD_TYPE_CHOICES)
+    
+    content_type = models. request_types = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
+    
+    def __unicode__(self):
+        return self.label
+    
 class Session (models.Model):
     uuid = models.CharField(max_length=32, unique=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions')
