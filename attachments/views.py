@@ -1,7 +1,7 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, StreamingHttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
-
+from django.contrib.contenttypes.models import ContentType
 from .models import Session, Attachment
 from .forms import PropertyForm
 from .utils import get_storage, url_filename
@@ -32,7 +32,11 @@ def attach(request, session_id):
             logger.exception('Error attaching file to session %s', session_id)
             return JsonResponse({'ok': False, 'error': unicode(ex)})
     else:
-        content_type =  request.GET.get('contentType', None)
+        try:
+            app_label, model = request.GET['contentType'].split('.', 1)
+            content_type = ContentType.objects.get(app_label=app_label, model=model)
+        except:
+            content_type = None
         return render(request, session.template, {
             'session': session,
             'content_type': content_type,
@@ -66,35 +70,24 @@ def download(request, attach_id, filename=None):
         response['Content-Disposition'] = "attachment; filename=%s" % filename
     return response
 
-def update_attachment(request, content_type, attach_id):
-    print request.is_ajax()
+def update_attachment(request, attach_id):
+    attachment = get_object_or_404(Attachment, pk=attach_id)
     if request.is_ajax() and request.method == 'POST':
         try:
-            att_instance = Attachment.objects.get(pk=attach_id)
-            kwargs = {'content_type': content_type, 'att_instance': att_instance}
-        
-            property_form = PropertyForm(request.POST, **kwargs)
+            property_form = PropertyForm(request.POST, instance=attachment)
             if property_form.is_valid():
-                att_instance.data = att_instance.extract_data(request)
-                att_instance.save()
-            return JsonResponse({'ok': True})
+                attachment.data = attachment.extract_data(request)
+                attachment.save()
+                return JsonResponse({'ok': True})
+            else:
+                raise Exception('Error updating attachment properties.')
         except Exception, ex:
-            logger.exception('Error updating attachment (pk=%s, file_name=%s)', attach_id, att_instance.file_name)
+            logger.exception('Error updating attachment (pk=%s, file_name=%s)', attach_id, attachment.file_name)
             return JsonResponse({'ok': False, 'error': unicode(ex)})
-
     raise Http404()
-        
-def show_attachment_properties(request, content_type, attach_id):
+
+def show_attachment_properties(request, attach_id):
     attachment = get_object_or_404(Attachment, pk=attach_id)
     return render(request, 'attachments/properties.html', {
-        'content_type': content_type,
         'att': attachment,
     })
-     
-    
-    
-    
-    
-    
-    
-    

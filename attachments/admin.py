@@ -4,9 +4,11 @@ from .models import Attachment, Property, Session, Upload
 class AttachmentAdmin (admin.ModelAdmin):
     list_display = ('file_path', 'file_name', 'file_size', 'date_created')
     readonly_fields = ('data',)
-    
+
 class PropertyAdmin (admin.ModelAdmin):
-    pass
+    list_display = ('label', 'slug', 'data_type')
+    prepopulated_fields = {'slug': ('label',)}
+    filter_horizontal = ('content_type',)
 
 class UploadInline (admin.TabularInline):
     model = Upload

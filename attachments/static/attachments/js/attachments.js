@@ -14,7 +14,9 @@
         var refresh = function() {
             return $.ajax({
                 url: settings.url,
-                data: {contentType: settings.contentType},
+                data: {
+                    contentType: settings.contentType || ''
+                },
                 success: function(html) {
                     $(settings.container).empty().append(html);
                 }
@@ -115,50 +117,27 @@
         return false;
     });
     
-    $("body").on('submit', '.update-attachment', function(e)
-		{
-		    var postData = $(this).serializeArray();
-		    var formURL = $(this).attr("action");
-		    $.ajax(
-		    {
-		        url : formURL,
-		        type: "POST",
-		        data : postData,
-		        success:function(data, textStatus, jqXHR) 
-		        {
-		        	$(".att-prop-saved-alert").show();
-		        	//If we want to hide popup on save sue this
-		        	//$(".popover").hide();
-		        },
-		        error: function(jqXHR, textStatus, errorThrown) 
-		        {
-		        	$(".att-prop-save-failed-alert").show();
-		        }
-		    });
-		    e.preventDefault(); //STOP default action
-		    e.unbind(); //unbind. to stop multiple form submit.
-		});
-		 
+    $('body').on('submit', '.update-attachment', function(e) {
+        var postData = $(this).serializeArray();
+        var formURL = $(this).attr('action');
+        var popover = $(this).closest('.popover');
+        var alert = $(this).find('.attachment-alert');
+        $.ajax({
+            url: formURL,
+            type: 'POST',
+            data: postData,
+            success: function(data, textStatus, jqXHR) {
+                if(data.ok) {
+                    popover.fadeOut(150);
+                }
+                else {
+                    alert.text(data.error).show();
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert.text('Error trying to update attachment properties.').show();
+            }
+        });
+        return false;
+    });
 }(jQuery));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

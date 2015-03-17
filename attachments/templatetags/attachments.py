@@ -6,19 +6,10 @@ from ..models import Property
 register = template.Library()
 
 @register.filter
-def get_attachment_properties_form(content_type, att_instance):
-    kwargs = {'content_type': content_type, 'att_instance': att_instance}
-    property_form = PropertyForm(**kwargs)
-            
-    return property_form
-
+def has_attachment_properties(obj):
+    ct = ContentType.objects.get_for_model(obj)
+    return Property.objects.filter(content_type=ct).exists()
 
 @register.filter
-def get_content_type(obj):
-    return ContentType.objects.get_for_model(obj)
-
-@register.filter
-def has_attachment_properties(content_type):
-    properties = Property.objects.filter(content_type__model=content_type)
-            
-    return True if properties else False
+def attachment_properties_form(obj, content_type=None):
+    return PropertyForm(instance=obj, content_type=content_type)

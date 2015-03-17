@@ -55,11 +55,16 @@ class Attachment (models.Model):
             'filename': self.file_name,
         })
 
+    def get_property_url(self):
+        return reverse('show-attachment-properties', kwargs={
+            'attach_id': self.pk,
+        })
+
     @property
     def querydata(self):
         from django.utils.datastructures import MultiValueDict
         return MultiValueDict(self.data or {})
-    
+
     def extract_data(self, request):
         data = {}
         if request and request.POST:
@@ -69,17 +74,18 @@ class Attachment (models.Model):
                     data[key[len(prefix):]] = request.POST.getlist(key)
         return data
 
-
 class Property (models.Model):
     label = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, help_text='Must be alphanumeric, with no spaces.')
     data_type = models.CharField(max_length=20, choices=FIELD_TYPE_CHOICES)
-    
-    content_type = models. request_types = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
-    
+    content_type = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
+
+    class Meta:
+        verbose_name_plural = 'properties'
+
     def __unicode__(self):
         return self.label
-    
+
 class Session (models.Model):
     uuid = models.CharField(max_length=32, unique=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions')
