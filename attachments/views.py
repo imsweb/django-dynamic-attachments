@@ -1,11 +1,11 @@
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, StreamingHttpResponse, Http404
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
 from django.contrib.contenttypes.models import ContentType
 from .models import Session, Attachment
 from .forms import PropertyForm
 from .utils import get_storage, url_filename
-from .signals import file_uploaded
+from .signals import file_uploaded, file_downloaded
 from wsgiref.util import FileWrapper
 import mimetypes
 import tempfile
@@ -20,7 +20,7 @@ def attach(request, session_id):
     if request.method == 'POST':
         try:
             f = request.FILES['attachment']
-            file_uploaded.send(sender=f)
+            file_uploaded.send(sender=f, request=request, session=session)
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
             fd, path = tempfile.mkstemp()
             with os.fdopen(fd, 'wb') as fp:
@@ -54,9 +54,20 @@ def delete_upload(request, session_id, upload_id):
         logger.exception('Error deleting upload (pk=%s, file_name=%s) from session %s', upload_id, file_name, session_id)
         return JsonResponse({'ok': False, 'error': unicode(ex)})
 
-# TODO: permission checking
 def download(request, attach_id, filename=None):
     attachment = get_object_or_404(Attachment, pk=attach_id)
+    # Check to see if this attachments model instance has a can_download, otherwise fall back
+    # to checking request.user.is_authenticated by default.
+    obj = attachment.content_object
+    auth = request.user.is_authenticated()
+    if hasattr(obj, 'can_download'):
+        auth = obj.can_download(request, attachment)
+        if isinstance(auth, HttpResponse):
+            return auth
+    if not auth:
+        raise Http404()
+    # Fire the download signal, in case receivers want to raise an Http404, or log downloads.
+    file_downloaded.send(sender=attachment, request=request)
     storage = get_storage()
     content_type = mimetypes.guess_type(attachment.file_name, strict=False)[0]
     response = StreamingHttpResponse(FileWrapper(storage.open(attachment.file_path)), content_type=content_type)
