@@ -76,7 +76,7 @@ def download(request, attach_id, filename=None):
         response['Content-Length'] = storage.size(attachment.file_path)
     except:
         pass
-    if filename is None:
+    if not filename:
         filename = url_filename(attachment.file_name)
         response['Content-Disposition'] = "attachment; filename=%s" % filename
     return response

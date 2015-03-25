@@ -49,10 +49,10 @@ class Attachment (models.Model):
         super(Attachment, self).delete(**kwargs)
 
     def get_absolute_url(self):
-        # TODO: setting to include filename in URL?
+        show_filenames = getattr(settings, 'ATTACHMENT_URL_FILENAMES', True)
         return reverse('attachment-download', kwargs={
             'attach_id': self.pk,
-            'filename': self.file_name,
+            'filename': self.file_name if show_filenames else '',
         })
 
     def get_property_url(self):
