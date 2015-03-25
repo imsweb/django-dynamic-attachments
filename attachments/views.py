@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from .models import Session, Attachment
 from .forms import PropertyForm
 from .utils import get_storage, url_filename
-from .signals import file_uploaded, file_downloaded
+from .signals import file_uploaded, file_download
 from wsgiref.util import FileWrapper
 import mimetypes
 import tempfile
@@ -67,7 +67,7 @@ def download(request, attach_id, filename=None):
     if not auth:
         raise Http404()
     # Fire the download signal, in case receivers want to raise an Http404, or log downloads.
-    file_downloaded.send(sender=attachment, request=request)
+    file_download.send(sender=attachment, request=request)
     storage = get_storage()
     content_type = mimetypes.guess_type(attachment.file_name, strict=False)[0]
     response = StreamingHttpResponse(FileWrapper(storage.open(attachment.file_path)), content_type=content_type)

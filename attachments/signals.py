@@ -4,4 +4,4 @@ from django.dispatch import Signal
 file_uploaded = Signal(providing_args=('request', 'session'))
 
 # Sent when an attachment is downloaded.
-file_downloaded = Signal(providing_args=('request',))
+file_download = Signal(providing_args=('request',))
