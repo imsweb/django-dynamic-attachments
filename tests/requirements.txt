@@ -1,0 +1,5 @@
+coverage
+Django>=1.7
+django-coverage
+teamcity-messages
+https://git.imsweb.com/watsond/bootstrap/repository/archive.zip
