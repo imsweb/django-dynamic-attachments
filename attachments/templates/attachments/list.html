@@ -21,7 +21,7 @@
                         </a>
                     </td>
                 </tr>
-                {% if content_type %}
+                {% if content_type and content_type|has_attachment_properties %}
                     <tr class="properties">
                         <td colspan="3">{% bootstrap_form upload|attachment_properties_form:content_type %}</td>
                     </tr>
