@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 def attach(request, session_id):
     session = Session.objects.get(uuid=session_id)
     if request.method == 'POST':
+        # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
+        content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
         try:
             f = request.FILES['attachment']
             file_uploaded.send(sender=f, request=request, session=session)
@@ -27,10 +29,10 @@ def attach(request, session_id):
                 for chunk in f.chunks():
                     fp.write(chunk)
             session.uploads.create(file_path=path, file_name=f.name, file_size=f.size)
-            return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size})
+            return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size}, content_type=content_type)
         except Exception, ex:
             logger.exception('Error attaching file to session %s', session_id)
-            return JsonResponse({'ok': False, 'error': unicode(ex)})
+            return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
     else:
         try:
             app_label, model = request.GET['contentType'].split('.', 1)

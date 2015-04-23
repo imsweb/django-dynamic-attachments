@@ -23,6 +23,44 @@
             });
         };
         
+        var resetInput = function(input) {
+            var inp = $(input);
+            inp.wrap('<form>').closest('form').get(0).reset();
+            inp.unwrap();
+        };
+        
+        var handleResponse = function(data, signal) {
+            if(data.ok) {
+                if(settings.success) {
+                    settings.success(data);
+                }
+                signal.resolve(data);
+            }
+            else {
+                if(settings.error) {
+                    settings.error(data);
+                }
+                signal.reject(data);
+            }
+        };
+        
+        var iframeUpload = function(input) {
+            var signal = $.Deferred();
+            $.ajax(settings.url, {
+                type: 'POST',
+                iframe: true,
+                files: $(input),
+                dataType: 'text',
+                success: function(responseText) {
+                    var data = JSON.parse(responseText);
+                    handleResponse(data, signal);
+                    resetInput(input);
+                    refresh();
+                }
+            });
+            return signal;
+        };
+        
         var upload = function(file) {
             var signal = $.Deferred();
             var formData = new FormData();
@@ -44,18 +82,7 @@
                 
                 // Fire the success/error handlers with the returned JSON
                 var data = JSON.parse(xhr.responseText);
-                if(data.ok) {
-                    if(settings.success) {
-                        settings.success(data);
-                    }
-                    signal.resolve(data);
-                }
-                else {
-                    if(settings.error) {
-                        settings.error(data);
-                    }
-                    signal.reject(data);
-                }
+                handleResponse(data, signal);
             };
             
             xhr.open('POST', settings.url, true);
@@ -72,9 +99,7 @@
             }
             // Clear the file input, if it was used to trigger the upload.
             if(input) {
-                var inp = $(input);
-                inp.wrap('<form>').closest('form').get(0).reset();
-                inp.unwrap();
+                resetInput(input);
             }
         };
         
@@ -101,7 +126,12 @@
         refresh();
         
         return this.change(function(e) {
-            uploadFiles(this.files, this);
+            if(typeof FormData === 'undefined') {
+                iframeUpload(this);
+            }
+            else {
+                uploadFiles(this.files, this);
+            }
         });
     };
     
