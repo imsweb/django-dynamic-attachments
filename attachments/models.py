@@ -7,6 +7,7 @@ from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.conf import settings
 from .utils import get_context_key, get_storage, get_default_path, JSONField
+from attachments import signals
 import os
 
 FIELD_TYPE_CHOICES = (
@@ -112,7 +113,7 @@ class Session (models.Model):
     def hidden_input(self):
         return mark_safe('<input type="hidden" name="%s" value="%s" />' % (get_context_key(self.context), self.uuid))
 
-    def attach(self, obj, storage=None, path=None, data=None):
+    def attach(self, obj, storage=None, path=None, data=None, send_signal=True):
         attached = []
         if storage is None:
             storage = get_storage()
@@ -131,6 +132,9 @@ class Session (models.Model):
                     data=att_data,
                     content_object=obj
                 ))
+        if send_signal:
+            # Send a signal that attachments were attached. Pass what attachments were attached and to what object.
+            signals.attachments_attached.send(sender=self, obj=obj, attachments=attached)
         return attached
 
 class Upload (models.Model):
