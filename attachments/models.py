@@ -7,7 +7,7 @@ from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.conf import settings
 from .utils import get_context_key, get_storage, get_default_path, JSONField
-from attachments import signals
+from .signals import attachments_attached
 import os
 
 FIELD_TYPE_CHOICES = (
@@ -134,7 +134,7 @@ class Session (models.Model):
                 ))
         if send_signal:
             # Send a signal that attachments were attached. Pass what attachments were attached and to what object.
-            signals.attachments_attached.send(sender=self, obj=obj, attachments=attached)
+            attachments_attached.send(sender=self, obj=obj, attachments=attached)
         return attached
 
 class Upload (models.Model):
