@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import Attachment, Property, Session, Upload
 
 class AttachmentAdmin (admin.ModelAdmin):
-    list_display = ('file_path', 'file_name', 'file_size', 'date_created')
+    list_display = ('file_path', 'file_name', 'file_size', 'content_type', 'context', 'date_created')
     readonly_fields = ('data',)
 
 class PropertyAdmin (admin.ModelAdmin):
