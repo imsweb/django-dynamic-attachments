@@ -17,10 +17,6 @@ FIELD_TYPE_CHOICES = (
     ('decimal', 'Decimal'),
     ('boolean', 'Boolean'),
     ('date', 'Date'),
-    ('lookup', 'Lookup (Dropdown)'),
-    ('radio', 'Lookup (Radio)'),
-    ('multi', 'Multi-Value Lookup (Checkboxes)'),
-    ('multilist', 'Multi-Value Lookup (Multi-Select)'),
     ('email', 'Email Address'),
 )
 

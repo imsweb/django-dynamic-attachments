@@ -1,7 +1,7 @@
 {% load attachments %}
 {% load bootstrap %}
 
-<div class="popover right">
+<div class="popover">
     <div class="arrow"></div>
     <form action="{% url "update-attachment" attach_id=att.pk %}" method="post" class="update-attachment">
            {% csrf_token %}

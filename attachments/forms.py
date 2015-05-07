@@ -4,10 +4,6 @@ from .models import Property, Upload, Attachment
 
 PROPERTY_FIELD_CLASSES = {
     'date': forms.DateField,
-    'lookup': forms.ChoiceField,
-    'radio': forms.ChoiceField,
-    'multi': forms.MultipleChoiceField,
-    'multilist': forms.MultipleChoiceField,
     'boolean': forms.NullBooleanField,
     'integer': forms.IntegerField,
     'decimal': forms.DecimalField,
@@ -17,10 +13,7 @@ PROPERTY_FIELD_CLASSES = {
 PROPERTY_WIDGET_CLASSES = {
     'text': widgets.Textarea,
     'date': widgets.DateInput,
-    'lookup': widgets.Select,
     'radio': forms.RadioSelect,
-    'multi': forms.CheckboxSelectMultiple,
-    'multilist': widgets.SelectMultiple,
     'boolean': forms.CheckboxInput,
 }
 
@@ -51,14 +44,6 @@ class PropertyForm (forms.Form):
         if prop.data_type == 'date':
             # TODO: add a property for date display format?
             defaults['widget'] = defaults['widget'](format='%m/%d/%Y')
-        elif prop.data_type in ('lookup', 'radio', 'multi', 'multilist'):
-            choices = [(ch, ch) for ch in prop.choice_list]
-            if prop.data_type == 'lookup':
-                choices.insert(0, ('', ''))
-            elif prop.data_type == 'multilist':
-                # TODO: add a property for size?
-                defaults['widget'] = defaults['widget'](attrs={'size':min(len(choices) + 1, 10)})
-            defaults['choices'] = choices
         defaults.update(kwargs)
         field = field_class(**defaults)
         return field
