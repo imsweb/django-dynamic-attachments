@@ -12,7 +12,7 @@ def get_context_key(context):
         return 'attachments-%s' % context
     return 'attachments'
 
-def session(request, template='attachments/list.html', context=''):
+def session(request, template='attachments/list.html', context='', user=None):
     from .models import Session
     try:
         key = get_context_key(context)
@@ -20,9 +20,11 @@ def session(request, template='attachments/list.html', context=''):
         s._request = request
         return s
     except:
+        if user is None:
+            user = request.user if hasattr(request, 'user') and request.user and request.user.is_authenticated() else None
         for _i in range(5):
             try:
-                s = Session.objects.create(user=request.user, uuid=uuid.uuid4().hex, template=template, context=context)
+                s = Session.objects.create(user=user, uuid=uuid.uuid4().hex, template=template, context=context)
                 s._request = request
                 return s
             except:

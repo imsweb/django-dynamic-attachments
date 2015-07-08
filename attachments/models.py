@@ -24,7 +24,7 @@ class Attachment (models.Model):
     file_path = models.TextField(unique=True)
     file_name = models.CharField(max_length=200)
     file_size = models.IntegerField()
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachments')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachments', null=True, blank=True)
     context = models.CharField(max_length=200, blank=True, db_index=True)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
 
@@ -85,7 +85,7 @@ class Property (models.Model):
 
 class Session (models.Model):
     uuid = models.CharField(max_length=32, unique=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions', null=True, blank=True)
     template = models.CharField(max_length=200, default='attachments/list.html')
     context = models.CharField(max_length=200, blank=True)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
