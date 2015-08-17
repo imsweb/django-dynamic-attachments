@@ -1,13 +1,13 @@
-from django.db import models
-from django.core.urlresolvers import reverse
-from django.core.files import File
+from .signals import attachments_attached
+from .utils import get_context_key, get_storage, get_default_path, JSONField
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.utils.safestring import mark_safe
+from django.core.files import File
+from django.core.urlresolvers import reverse
+from django.db import models
 from django.utils import timezone
-from django.conf import settings
-from .utils import get_context_key, get_storage, get_default_path, JSONField
-from .signals import attachments_attached
+from django.utils.safestring import mark_safe
 import os
 
 FIELD_TYPE_CHOICES = (
@@ -19,6 +19,25 @@ FIELD_TYPE_CHOICES = (
     ('date', 'Date'),
     ('email', 'Email Address'),
 )
+
+class AttachmentManager (models.Manager):
+
+    def attach_raw(self, f, obj, user=None, context='', storage=None, path=None, data=None):
+        if storage is None:
+            storage = get_storage()
+        if path is None:
+            ct = ContentType.objects.get_for_model(obj)
+            path = '%s/%s/%s/%s/%s' % (ct.app_label, ct.model, obj.pk, context, f.name)
+        new_path = storage.save(path, f)
+        return self.create(
+            file_path=new_path,
+            file_name=f.name,
+            file_size=f.size,
+            user=user,
+            context=context,
+            data=data,
+            content_object=obj
+        )
 
 class Attachment (models.Model):
     file_path = models.TextField(unique=True)
@@ -34,6 +53,8 @@ class Attachment (models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey()
+
+    objects = AttachmentManager()
 
     def __unicode__(self):
         return self.file_name
