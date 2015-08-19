@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.conf import settings
 from django.db import models, migrations
 
 
@@ -14,13 +15,13 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='attachment',
             name='user',
-            field=models.ForeignKey(related_name='attachments', blank=True, to='users.User', null=True),
+            field=models.ForeignKey(related_name='attachments', blank=True, to=settings.AUTH_USER_MODEL, null=True),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='session',
             name='user',
-            field=models.ForeignKey(related_name='attachment_sessions', blank=True, to='users.User', null=True),
+            field=models.ForeignKey(related_name='attachment_sessions', blank=True, to=settings.AUTH_USER_MODEL, null=True),
             preserve_default=True,
         ),
     ]
