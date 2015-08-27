@@ -6,12 +6,13 @@ class AttachmentAdmin (admin.ModelAdmin):
     readonly_fields = ('data',)
 
 class PropertyAdmin (admin.ModelAdmin):
-    list_display = ('label', 'slug', 'data_type')
+    list_display = ('label', 'slug', 'data_type', 'required')
     prepopulated_fields = {'slug': ('label',)}
     filter_horizontal = ('content_type',)
 
 class UploadInline (admin.TabularInline):
     model = Upload
+    extra = 0
 
 class SessionAdmin (admin.ModelAdmin):
     list_display = ('uuid', 'user', 'template', 'context', 'date_created')

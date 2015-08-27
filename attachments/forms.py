@@ -1,6 +1,6 @@
-from django import forms
-from bootstrap import widgets
 from .models import Property, Upload, Attachment
+from bootstrap import widgets
+from django import forms
 
 PROPERTY_FIELD_CLASSES = {
     'date': forms.DateField,
@@ -21,9 +21,12 @@ class PropertyForm (forms.Form):
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.pop('instance')
-        content_type = kwargs.pop('content_type', None)
-        if isinstance(instance, Attachment) and not content_type:
+
+        content_type = None
+        if isinstance(instance, Attachment):
             content_type = instance.content_type
+        elif isinstance(instance, Upload):
+            content_type = instance.session.content_type
 
         super(PropertyForm, self).__init__(*args, **kwargs)
 
@@ -39,6 +42,7 @@ class PropertyForm (forms.Form):
             field_class = PROPERTY_FIELD_CLASSES.get(prop.data_type, forms.CharField)
         defaults = {
             'label': prop.label,
+            'required': prop.required,
             'widget': PROPERTY_WIDGET_CLASSES.get(prop.data_type, widgets.TextInput),
         }
         if prop.data_type == 'date':

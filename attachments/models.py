@@ -97,6 +97,7 @@ class Property (models.Model):
     slug = models.SlugField(unique=True, help_text='Must be alphanumeric, with no spaces.')
     data_type = models.CharField(max_length=20, choices=FIELD_TYPE_CHOICES)
     content_type = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
+    required = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural = 'properties'
@@ -109,10 +110,14 @@ class Session (models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions', null=True, blank=True)
     template = models.CharField(max_length=200, default='attachments/list.html')
     context = models.CharField(max_length=200, blank=True)
+    content_type = models.ForeignKey(ContentType, null=True, blank=True)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
 
     # Stash the request object when calling attachments.session()
     _request = None
+
+    # Once is_valid is called, stash any PropertyForms to keep per-upload form errors.
+    _forms = {}
 
     def __unicode__(self):
         return self.uuid
@@ -153,6 +158,23 @@ class Session (models.Model):
             # Send a signal that attachments were attached. Pass what attachments were attached and to what object.
             attachments_attached.send(sender=self, obj=obj, attachments=attached)
         return attached
+
+    def is_valid(self):
+        if not self.content_type:
+            return True
+        from .forms import PropertyForm
+        valids = []
+        for upload in self.uploads.all():
+            property_form = PropertyForm(self._request.POST, instance=upload)
+            valids.append(property_form.is_valid())
+            self._forms[upload] = property_form
+        return all(valids)
+
+    @property
+    def upload_forms(self):
+        from .forms import PropertyForm
+        for upload in self.uploads.all():
+            yield upload, self._forms.get(upload, PropertyForm(instance=upload))
 
 class Upload (models.Model):
     session = models.ForeignKey(Session, related_name='uploads')
