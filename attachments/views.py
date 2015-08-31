@@ -1,7 +1,7 @@
 from .forms import PropertyForm
 from .models import Session, Attachment
 from .signals import file_uploaded, file_download
-from .utils import get_storage, url_filename
+from .utils import get_storage, url_filename, user_has_access
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
 from django.template import loader
@@ -52,15 +52,7 @@ def delete_upload(request, session_id, upload_id):
 
 def download(request, attach_id, filename=None):
     attachment = get_object_or_404(Attachment, pk=attach_id)
-    # Check to see if this attachments model instance has a can_download, otherwise fall back
-    # to checking request.user.is_authenticated by default.
-    obj = attachment.content_object
-    auth = request.user.is_authenticated()
-    if hasattr(obj, 'can_download'):
-        auth = obj.can_download(request, attachment)
-        if isinstance(auth, HttpResponse):
-            return auth
-    if not auth:
+    if not user_has_access(request, attachment):
         raise Http404()
     # Fire the download signal, in case receivers want to raise an Http404, or log downloads.
     file_download.send(sender=attachment, request=request)
@@ -79,6 +71,8 @@ def download(request, attach_id, filename=None):
 
 def update_attachment(request, attach_id):
     attachment = get_object_or_404(Attachment, pk=attach_id)
+    if not user_has_access(request, attachment):
+        raise Http404()
     if request.is_ajax() and request.method == 'POST':
         try:
             property_form = PropertyForm(request.POST, instance=attachment)
@@ -96,9 +90,19 @@ def update_attachment(request, attach_id):
             return JsonResponse({'ok': False, 'error': unicode(ex)})
     raise Http404()
 
-def show_attachment_properties(request, attach_id):
+def edit_attachment_properties(request, attach_id):
     attachment = get_object_or_404(Attachment, pk=attach_id)
-    return render(request, 'attachments/properties.html', {
+    if not user_has_access(request, attachment):
+        raise Http404()
+    return render(request, 'attachments/edit_properties.html', {
         'att': attachment,
         'form': PropertyForm(instance=attachment),
+    })
+
+def view_attachment_properties(request, attach_id):
+    attachment = get_object_or_404(Attachment, pk=attach_id)
+    if not user_has_access(request, attachment):
+        raise Http404()
+    return render(request, 'attachments/view_properties.html', {
+        'att': attachment,
     })

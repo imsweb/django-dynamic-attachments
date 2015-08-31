@@ -73,8 +73,13 @@ class Attachment (models.Model):
             'filename': self.file_name if show_filenames else '',
         })
 
-    def get_property_url(self):
-        return reverse('show-attachment-properties', kwargs={
+    def get_edit_property_url(self):
+        return reverse('edit-attachment-properties', kwargs={
+            'attach_id': self.pk,
+        })
+
+    def get_view_property_url(self):
+        return reverse('view-attachment-properties', kwargs={
             'attach_id': self.pk,
         })
 
@@ -91,6 +96,15 @@ class Attachment (models.Model):
                 if key.startswith(prefix):
                     data[key[len(prefix):]] = request.POST.getlist(key)
         return data
+
+    def get_properties(self):
+        return Property.objects.filter(content_type=self.content_type)
+
+    def get_field(self, prop):
+        """
+            Added for use in bootstrap's template tag render_value. Returns tuple of property label and value
+        """
+        return prop.label, self.data.get(prop.slug, [])
 
 class Property (models.Model):
     label = models.CharField(max_length=200)
