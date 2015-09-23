@@ -1,11 +1,12 @@
-from django.db import models
-from django.core.serializers.json import DjangoJSONEncoder
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import get_storage_class
-from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpResponse
+from django.db import models
+import json
 import urllib
 import uuid
-import json
 
 def get_context_key(context):
     if context:
@@ -47,6 +48,17 @@ def url_filename(filename):
         return filename.encode('us-ascii')
     except:
         return urllib.quote(filename.encode('utf-8'), safe='/ ')
+
+def user_has_access(request, attachment):
+    # Check to see if this attachments model instance has a can_download, otherwise fall back
+    # to checking request.user.is_authenticated by default.
+    obj = attachment.content_object
+    auth = request.user.is_authenticated()
+    if hasattr(obj, 'can_download'):
+        auth = obj.can_download(request, attachment)
+        if isinstance(auth, HttpResponse):
+            return auth
+    return auth
 
 class JSONField (models.TextField):
     __metaclass__ = models.SubfieldBase

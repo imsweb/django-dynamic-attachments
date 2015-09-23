@@ -1,20 +1,24 @@
 {% load attachments %}
+{% load bootstrap %}
 
 <div class="popover">
     <div class="arrow"></div>
-    <form action="{% url "update-attachment" attach_id=att.pk %}" method="post" class="update-attachment">
-        {% csrf_token %}
         <div class="popover-title">
             <button type="button" class="close" aria-hidden="true" data-dismiss="popover"><i class="fa fa-times"></i></button>
-            <h4>Edit {{ att.file_name }} Properties</h4>
+            <h4>View {{ att.file_name }} Properties</h4>
         </div>
         <div class="popover-content attachment-properties-form">
-            {% include "attachments/form.html" %}
+		     <div class="row">
+		        {% for prop in att.get_properties %}
+		            <div class="col-md-3">
+		                {% render_value att prop %}
+		            </div>
+		        {% endfor %}
+		    </div>           
         </div>
         <div class="popover-footer">
             <div class="popover-footer-btns">
-                <button type="button" class="btn btn-default btn-sm" data-dismiss="popover">Cancel</button>
-                <button type="submit" class="btn btn-primary btn-sm save-properties">Save</button>
+                <button type="button" class="btn btn-primary btn-sm" data-dismiss="popover">Close</button>
             </div>
         </div>
     </form>
