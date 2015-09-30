@@ -16,7 +16,7 @@
                     <td>{{ upload.file_size|filesizeformat }}</td>
                     <td>
                         <a href="{% url "delete-upload" session_id=session.uuid upload_id=upload.pk %}" class="delete-upload">
-                            {% block delete-upload %}Remove{% endblock %}
+                            {% block delete-upload %}Remove <span class="sr-only">{{ upload.file_name }}</span>{% endblock %}
                         </a>
                     </td>
                 </tr>
