@@ -67,7 +67,7 @@ def download(request, attach_id, filename=None):
         pass
     if getattr(settings, 'ATTACHMENT_ALWAYS_DOWNLOAD', False) or not filename:
         filename = url_filename(filename or attachment.file_name)
-        response['Content-Disposition'] = "attachment; filename=%s" % filename
+        response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     return response
 
 def update_attachment(request, attach_id):
