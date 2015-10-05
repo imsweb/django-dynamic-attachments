@@ -2,7 +2,8 @@ from .forms import PropertyForm
 from .models import Session, Attachment
 from .signals import file_uploaded, file_download
 from .utils import get_storage, url_filename, user_has_access
-from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, Http404
+from django.conf import settings
+from django.http import JsonResponse, StreamingHttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
@@ -64,8 +65,8 @@ def download(request, attach_id, filename=None):
         response['Content-Length'] = storage.size(attachment.file_path)
     except:
         pass
-    if not filename:
-        filename = url_filename(attachment.file_name)
+    if getattr(settings, 'ATTACHMENT_ALWAYS_DOWNLOAD', False) or not filename:
+        filename = url_filename(filename or attachment.file_name)
         response['Content-Disposition'] = "attachment; filename=%s" % filename
     return response
 
