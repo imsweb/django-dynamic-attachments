@@ -1,6 +1,7 @@
-__version_info__ = (0, 1, 0)
+__version_info__ = (1, 0, 0)
 __version__ = '.'.join(str(i) for i in __version_info__)
 
 def session(*args, **kwargs):
+    # Expose utils.session without importing utils from __init__ at module level.
     from .utils import session as attachment_session
     return attachment_session(*args, **kwargs)
