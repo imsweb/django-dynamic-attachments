@@ -179,8 +179,6 @@ class Session (models.Model):
                     data=att_data,
                     content_object=obj
                 ))
-        self.data = None
-        self.save()
         if send_signal:
             # Send a signal that attachments were attached. Pass what attachments were attached and to what object.
             attachments_attached.send(sender=self, obj=obj, attachments=attached)
