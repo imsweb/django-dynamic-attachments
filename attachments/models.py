@@ -127,6 +127,9 @@ class Session (models.Model):
     content_type = models.ForeignKey(ContentType, null=True, blank=True)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
 
+    # User-defined data, stored as JSON in a text field.
+    data = JSONField(null=True)
+
     # Stash the request object when calling attachments.session()
     _request = None
 
@@ -145,6 +148,14 @@ class Session (models.Model):
         return reverse('attach', kwargs={
             'session_id': self.uuid,
         })
+
+    def set_data(self, extract_data=None, save=True):
+        data = {}
+        for upload in self.uploads.all():
+            data.update(extract_data(upload) if extract_data else upload.extract_data(self._request))
+        self.data = data
+        if save:
+            self.save()
 
     def hidden_input(self):
         return mark_safe('<input type="hidden" name="%s" value="%s" />' % (get_context_key(self.context), self.uuid))
@@ -168,6 +179,8 @@ class Session (models.Model):
                     data=att_data,
                     content_object=obj
                 ))
+        self.data = None
+        self.save()
         if send_signal:
             # Send a signal that attachments were attached. Pass what attachments were attached and to what object.
             attachments_attached.send(sender=self, obj=obj, attachments=attached)
