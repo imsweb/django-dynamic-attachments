@@ -149,11 +149,18 @@ class Session (models.Model):
             'session_id': self.uuid,
         })
 
-    def set_data(self, extract_data=None, save=True):
+    def extract_data(self):
         data = {}
-        for upload in self.uploads.all():
-            data.update(extract_data(upload) if extract_data else upload.extract_data(self._request))
-        self.data = data
+        if self._request and self._request.POST:
+            for upload in self.uploads.all():
+                prefix = 'upload-%d-' % upload.pk
+                for key in self._request.POST:
+                    if key.startswith(prefix):
+                        data[key] = self._request.POST.getlist(key)
+        return data
+
+    def set_data(self, extract_data=None, save=True):
+        self.data = extract_data(self) if extract_data else self.extract_data()
         if save:
             self.save()
 
