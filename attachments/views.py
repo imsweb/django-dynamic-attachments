@@ -25,7 +25,7 @@ def attach(request, session_id):
             f = request.FILES['attachment']
             file_uploaded.send(sender=f, request=request, session=session)
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
-            fd, path = tempfile.mkstemp()
+            fd, path = tempfile.mkstemp(dir=getattr(settings, 'ATTACHMENT_TEMP_DIR', None))
             with os.fdopen(fd, 'wb') as fp:
                 for chunk in f.chunks():
                     fp.write(chunk)
