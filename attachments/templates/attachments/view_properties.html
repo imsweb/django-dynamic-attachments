@@ -8,8 +8,8 @@
             <h3>View {{ att.file_name }} Properties</h3>
         </div>
         <div class="popover-content attachment-properties-form">
-			{% for prop in att.get_properties %
-		     	<div class="row">}
+			{% for prop in att.get_properties %}
+		     	<div class="row">
 		            <div class="col-md-12">
 		                {% render_value att prop %}
 		            </div>
