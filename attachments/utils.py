@@ -61,7 +61,6 @@ def user_has_access(request, attachment):
     return auth
 
 class JSONField (models.TextField):
-    __metaclass__ = models.SubfieldBase
 
     def to_python(self, value):
         if value == '':
@@ -69,6 +68,9 @@ class JSONField (models.TextField):
         if isinstance(value, basestring):
             return json.loads(value)
         return value
+
+    def from_db_value(self, value, expression, connection, context):
+        return None if value is None else self.get_prep_value(value)
 
     def get_prep_value(self, value):
         if value == '':
