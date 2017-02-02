@@ -8,13 +8,15 @@ PROPERTY_FIELD_CLASSES = {
     'integer': forms.IntegerField,
     'decimal': forms.DecimalField,
     'email': forms.EmailField,
-    'choice': forms.ChoiceField
+    'choice': forms.ChoiceField,
+    'model': forms.ModelChoiceField
 }
 
 PROPERTY_WIDGET_CLASSES = {
     'text': widgets.Textarea,
     'date': widgets.DateInput,
     'choice': forms.Select,
+    'model': forms.Select,
     'boolean': forms.CheckboxInput,
 }
 
@@ -53,6 +55,8 @@ class PropertyForm (forms.Form):
         elif prop.data_type == 'choice':
             choices = [(ch, ch) for ch in prop.choice_list]
             defaults['choices'] = choices
+        elif prop.data_type == 'model':
+            defaults['queryset'] = prop.model_queryset
         defaults.update(kwargs)
         field = field_class(**defaults)
         return field

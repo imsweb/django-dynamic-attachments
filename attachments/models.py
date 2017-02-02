@@ -1,5 +1,5 @@
 from .signals import attachments_attached
-from .utils import get_context_key, get_storage, get_default_path, JSONField
+from .utils import get_context_key, get_storage, get_default_path, JSONField, import_class
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -18,7 +18,8 @@ FIELD_TYPE_CHOICES = (
     ('boolean', 'Boolean'),
     ('date', 'Date'),
     ('email', 'Email Address'),
-    ('choice', 'Choice')
+    ('choice', 'Choice'),
+    ('model', 'Model')
 )
 
 class AttachmentManager (models.Manager):
@@ -112,6 +113,7 @@ class Property (models.Model):
     slug = models.SlugField(unique=True, help_text='Must be alphanumeric, with no spaces.')
     data_type = models.CharField(max_length=20, choices=FIELD_TYPE_CHOICES)
     choices = models.TextField(blank=True, help_text='Lookup choices for this field, one per line.')
+    model = models.CharField(max_length=200, blank=True, help_text='The path to the lookup model for this field.')
     content_type = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
     required = models.BooleanField(default=True)
 
@@ -124,6 +126,16 @@ class Property (models.Model):
     @property
     def choice_list(self):
         return [ch.strip() for ch in self.choices.split('\n') if ch.strip()]
+    
+    @property
+    def model_queryset(self):
+        ModelClass = import_class(self.model)
+        # Lookup models can provide an @classmethod 'field_model_queryset' to have control over what queryset is used
+        if hasattr(ModelClass, 'field_model_queryset'):
+            qs = getattr(ModelClass, 'field_model_queryset')()
+        else:
+            qs = ModelClass.objects.all()
+        return qs
 
 class Session (models.Model):
     uuid = models.CharField(max_length=32, unique=True)
