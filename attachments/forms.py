@@ -17,6 +17,7 @@ PROPERTY_WIDGET_CLASSES = {
     'date': widgets.DateInput,
     'choice': forms.Select,
     'model': forms.Select,
+    'radio': forms.RadioSelect,
     'boolean': forms.CheckboxInput,
 }
 

@@ -7,14 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('attachments', '0010_property_choices'),
+        ('attachments', '0008_session_data'),
     ]
 
     operations = [
         migrations.AddField(
             model_name='property',
+            name='choices',
+            field=models.TextField(help_text=b'Lookup choices for a ChoiceField, one per line.', blank=True),
+        ),
+        migrations.AddField(
+            model_name='property',
             name='model',
-            field=models.CharField(help_text=b'The path to the lookup model for this field.', max_length=200, blank=True),
+            field=models.CharField(help_text=b'The path to the lookup model for a ModelChoiceField.', max_length=200, blank=True),
         ),
         migrations.AlterField(
             model_name='property',
