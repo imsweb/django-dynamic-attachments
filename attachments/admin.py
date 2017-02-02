@@ -6,7 +6,7 @@ class AttachmentAdmin (admin.ModelAdmin):
     readonly_fields = ('data',)
 
 class PropertyAdmin (admin.ModelAdmin):
-    list_display = ('label', 'slug', 'data_type', 'choices', 'required')
+    list_display = ('label', 'slug', 'data_type', 'choices', 'model', 'required')
     prepopulated_fields = {'slug': ('label',)}
     filter_horizontal = ('content_type',)
 
