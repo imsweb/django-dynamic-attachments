@@ -18,6 +18,7 @@ FIELD_TYPE_CHOICES = (
     ('boolean', 'Boolean'),
     ('date', 'Date'),
     ('email', 'Email Address'),
+    ('choice', 'Choice')
 )
 
 class AttachmentManager (models.Manager):
@@ -110,6 +111,7 @@ class Property (models.Model):
     label = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, help_text='Must be alphanumeric, with no spaces.')
     data_type = models.CharField(max_length=20, choices=FIELD_TYPE_CHOICES)
+    choices = models.TextField(blank=True, help_text='Lookup choices for this field, one per line.')
     content_type = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
     required = models.BooleanField(default=True)
 
@@ -118,6 +120,10 @@ class Property (models.Model):
 
     def __unicode__(self):
         return self.label
+    
+    @property
+    def choice_list(self):
+        return [ch.strip() for ch in self.choices.split('\n') if ch.strip()]
 
 class Session (models.Model):
     uuid = models.CharField(max_length=32, unique=True)
