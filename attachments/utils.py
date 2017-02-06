@@ -7,6 +7,8 @@ from django.db import models
 import json
 import urllib
 import uuid
+import importlib
+
 
 def get_context_key(context):
     if context:
@@ -85,3 +87,8 @@ class JSONField (models.TextField):
 #    def deconstruct(self):
 #        name, _mod, args, kwargs = super(JSONField, self).deconstruct()
 #        return name, 'attachments.utils.JSONField', args, kwargs
+
+def import_class(fq_name):
+    module_name, class_name = fq_name.rsplit('.', 1)
+    mod = importlib.import_module(module_name)
+    return getattr(mod, class_name)
