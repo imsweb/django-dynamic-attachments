@@ -37,10 +37,10 @@ class PropertyForm (forms.Form):
         for prop in Property.objects.filter(content_type=content_type):
             if isinstance(instance, Upload):
                 field_key = 'upload-%d-%s' % (instance.pk, prop.slug)
-                self.fields[field_key] = self.formfield(prop, initial=','.join(instance.session.data.get(field_key, []) if instance.session.data else []))
+                self.fields[field_key] = self.formfield(prop, initial=','.join(instance.session.data if instance.session.data else []))
             elif isinstance(instance, Attachment):
                 field_key = 'attachment-%d-%s' % (instance.pk, prop.slug)
-                self.fields[field_key] = self.formfield(prop, initial=','.join(instance.data.get(prop.slug, []) if instance.data else []))
+                self.fields[field_key] = self.formfield(prop, initial=','.join(instance.data if instance.data else []))
 
     def formfield(self, prop, field_class=None, **kwargs):
         if field_class is None:
