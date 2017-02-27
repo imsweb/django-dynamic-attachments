@@ -72,7 +72,7 @@ class JSONField (models.TextField):
         return value
 
     def from_db_value(self, value, expression, connection, context):
-        return None if value is None else self.get_prep_value(value)
+        return None if value is None else self.to_python(value)
 
     def get_prep_value(self, value):
         if value == '':
