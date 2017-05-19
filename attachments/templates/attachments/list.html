@@ -1,11 +1,11 @@
 {% load bootstrap %}
 
-<table class="table table-condensed attachment-files-table">
+<table class="table table-condensed attachment-files-table" id="attachments-table">
     <thead>
         <tr>
             <th scope="col">File</th>
             <th scope="col">Size</th>
-            <th scope="col"></th>
+            <th scope="col">Remove</th>
         </tr>
     </thead>
     {% for upload, property_form in session.upload_forms %}

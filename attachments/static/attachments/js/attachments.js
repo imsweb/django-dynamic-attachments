@@ -9,12 +9,16 @@
             progress: null,
             success: null
         }, options);
-
+        
         var refresh = function() {
             return $.ajax({
                 url: settings.url,
                 success: function(html) {
                     $(settings.container).empty().append(html);
+                    if (document.getElementsByClassName("upload-item").length == 0){
+                        var tb = document.getElementById("attachments-table");
+                        tb.getElementsByTagName("thead")[0].remove();
+                    }
                 }
             });
         };
@@ -130,7 +134,7 @@
             }
         });
     };
-
+    
     $('body').on('click', 'a.delete-upload', function() {
         var row = $(this).closest('.upload-item');
         $.ajax({
@@ -138,6 +142,10 @@
             url: $(this).attr('href'),
             success: function(data) {
                 row.remove();
+                if (document.getElementsByClassName("upload-item").length == 0){
+                    var tb = document.getElementById("attachments-table");
+                    tb.getElementsByTagName("thead")[0].remove();
+                }
             }
         });
         return false;
