@@ -15,10 +15,6 @@
                 url: settings.url,
                 success: function(html) {
                     $(settings.container).empty().append(html);
-                    var tb = document.getElementsByClassName("attachment-files-table")[0];
-                    if (document.getElementsByClassName("upload-item").length == 0 && tb.getElementsByTagName("thead")[0] != null){
-                        tb.getElementsByTagName("thead")[0].remove();
-                    }
                 }
             });
         };
@@ -142,10 +138,6 @@
             url: $(this).attr('href'),
             success: function(data) {
                 row.remove();
-                var tb = document.getElementsByClassName("attachment-files-table")[0];
-                if (document.getElementsByClassName("upload-item").length == 0){
-                    tb.getElementsByTagName("thead")[0].remove();
-                }
             }
         });
         return false;

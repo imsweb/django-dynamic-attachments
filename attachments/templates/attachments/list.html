@@ -1,5 +1,6 @@
 {% load bootstrap %}
 
+{% if session.upload_list %}
 <table class="table table-condensed attachment-files-table">
     <thead>
         <tr>
@@ -27,3 +28,4 @@
         </tbody>
     {% endfor %}
 </table>
+{% endif %}
