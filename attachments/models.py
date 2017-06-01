@@ -225,10 +225,6 @@ class Session (models.Model):
         from .forms import PropertyForm
         for upload in self.uploads.all():
             yield upload, self._forms.get(upload, PropertyForm(instance=upload))
-            
-    @property
-    def upload_list(self):
-        return self.uploads.all()
 
 class Upload (models.Model):
     session = models.ForeignKey(Session, related_name='uploads')
