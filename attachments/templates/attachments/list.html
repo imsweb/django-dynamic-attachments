@@ -1,11 +1,12 @@
 {% load bootstrap %}
 
+{% if session.uploads.exists %}
 <table class="table table-condensed attachment-files-table">
     <thead>
         <tr>
             <th scope="col">File</th>
             <th scope="col">Size</th>
-            <th scope="col"></th>
+            <th scope="col">Remove</th>
         </tr>
     </thead>
     {% for upload, property_form in session.upload_forms %}
@@ -27,3 +28,4 @@
         </tbody>
     {% endfor %}
 </table>
+{% endif %}

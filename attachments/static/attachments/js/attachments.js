@@ -9,7 +9,7 @@
             progress: null,
             success: null
         }, options);
-
+        
         var refresh = function() {
             return $.ajax({
                 url: settings.url,
@@ -130,7 +130,7 @@
             }
         });
     };
-
+    
     $('body').on('click', 'a.delete-upload', function() {
         var row = $(this).closest('.upload-item');
         $.ajax({
