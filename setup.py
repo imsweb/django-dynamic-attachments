@@ -11,6 +11,9 @@ setup(
     license='BSD',
     packages=find_packages(),
     include_package_data=True,
+    install_requires=[
+        'pyclamd',
+    ],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -18,5 +21,5 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Utilities',
-    ]
+    ],
 )

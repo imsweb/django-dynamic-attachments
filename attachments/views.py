@@ -8,6 +8,7 @@ from django.shortcuts import render, get_object_or_404
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
 from wsgiref.util import FileWrapper
+from attachments.exceptions import VirusFoundException
 import logging
 import mimetypes
 import os
@@ -23,6 +24,12 @@ def attach(request, session_id):
         content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
         try:
             f = request.FILES['attachment']
+            if getattr(settings, 'ATTACHMENTS_CLAMD', False):
+                import pyclamd
+                cd = pyclamd.ClamdAgnostic()
+                virus = cd.scan_file(f)
+                if virus is not None:
+                    raise VirusFoundException("Virus %s found in file %s could not upload!" % (virus[f.name][1], f.name))                   
             file_uploaded.send(sender=f, request=request, session=session)
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
             temp_dir = getattr(settings, 'ATTACHMENT_TEMP_DIR', None)
@@ -34,6 +41,9 @@ def attach(request, session_id):
                     fp.write(chunk)
             session.uploads.create(file_path=path, file_name=f.name, file_size=f.size)
             return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size}, content_type=content_type)
+        except VirusFoundException, ex:
+            logger.exception(str(e))
+            return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
         except Exception, ex:
             logger.exception('Error attaching file to session %s', session_id)
             return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)

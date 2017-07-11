@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from attachments.exceptions import VirusFoundException
 import os
 
 FIELD_TYPE_CHOICES = (
@@ -25,6 +26,12 @@ FIELD_TYPE_CHOICES = (
 class AttachmentManager (models.Manager):
 
     def attach_raw(self, f, obj, user=None, context='', storage=None, path=None, data=None):
+        if getattr(settings, 'ATTACHMENTS_CLAMD', False):
+            import pyclamd
+            cd = pyclamd.ClamdAgnostic()
+            virus = cd.scan_file(f)
+            if virus is not None:
+                raise VirusFoundException("Virus %s found in file %s could not upload!" % (virus[f.name][1], f.name))
         if storage is None:
             storage = get_storage()
         if path is None:
