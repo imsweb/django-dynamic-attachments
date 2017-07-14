@@ -39,10 +39,17 @@ def attach(request, session_id):
             with os.fdopen(fd, 'wb') as fp:
                 for chunk in f.chunks():
                     fp.write(chunk)
+            # After attached file is placed in a temporary file and ATTACHMENTS_CLAMD is active scan it for viruses:
+            if getattr(settings, 'ATTACHMENTS_CLAMD', False):
+                import pyclamd
+                cd = pyclamd.ClamdUnixSocket()
+                if virus is not None:
+                    #TODO what to do with file? delete it, quarantine?
+                    raise VirusFoundException("Virus %s found in file %s could not upload!" % (virus[path][1], path))            
             session.uploads.create(file_path=path, file_name=f.name, file_size=f.size)
             return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size}, content_type=content_type)
         except VirusFoundException, ex:
-            logger.exception(str(e))
+            logger.exception(str(ex))
             return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
         except Exception, ex:
             logger.exception('Error attaching file to session %s', session_id)
