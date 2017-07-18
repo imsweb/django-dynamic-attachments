@@ -23,13 +23,7 @@ def attach(request, session_id):
         # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
         content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
         try:
-            f = request.FILES['attachment']
-            if getattr(settings, 'ATTACHMENTS_CLAMD', False):
-                import pyclamd
-                cd = pyclamd.ClamdAgnostic()
-                virus = cd.scan_file(f)
-                if virus is not None:
-                    raise VirusFoundException("Virus %s found in file %s could not upload!" % (virus[f.name][1], f.name))                   
+            f = request.FILES['attachment']            
             file_uploaded.send(sender=f, request=request, session=session)
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
             temp_dir = getattr(settings, 'ATTACHMENT_TEMP_DIR', None)
@@ -43,8 +37,14 @@ def attach(request, session_id):
             if getattr(settings, 'ATTACHMENTS_CLAMD', False):
                 import pyclamd
                 cd = pyclamd.ClamdUnixSocket()
+                virus = cd.scan_file(path)
                 if virus is not None:
-                    #TODO what to do with file? delete it, quarantine?
+                    #if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quaranine, otherwise delete
+                    if getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', False):
+                        quarantine_path = '/'.join([getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH'), os.path.basename(path)])
+                        os.rename(path,quarantine_path)
+                    else:
+                        os.remove(path)
                     raise VirusFoundException("Virus %s found in file %s could not upload!" % (virus[path][1], path))            
             session.uploads.create(file_path=path, file_name=f.name, file_size=f.size)
             return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size}, content_type=content_type)
