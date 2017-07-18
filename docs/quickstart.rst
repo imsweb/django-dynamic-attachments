@@ -49,3 +49,7 @@ Quickstart Guide
                 $('#progress').addClass('hidden');
             }
         });
+        
+6. Set the ``ATTACHMENT_TEMP_DIR`` setting to the temporary directory you would like files to save in a settings file
+
+7. (OPTIONAL) If you have the clamav daemon running on your server set ``ATTACHMENTS_CLAMD`` to true in a settings file. If you would like to set a path to quarantine infected files that are uploaded set ``ATTACHMENTS_QUARANTINE_PATH`` to desired path, if not set the default behavior will be to remove the files. Note that this currently only works for linux servers and the path to the clam socket will need to be set in /etc/clamav/clamd.conf or /etc/clamd.conf for this to work.
