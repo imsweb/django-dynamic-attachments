@@ -26,14 +26,6 @@ FIELD_TYPE_CHOICES = (
 class AttachmentManager (models.Manager):
 
     def attach_raw(self, f, obj, user=None, context='', storage=None, path=None, data=None):
-## Don't think we actually need to check for viruses here, since only need to check when they are uploaded which should happen whenever
-## attach is called from views, will confirm this behavior and delete this and the following commented out code if so...
-#         if getattr(settings, 'ATTACHMENTS_CLAMD', False):
-#             import pyclamd
-#             cd = pyclamd.ClamdAgnostic()
-#             virus = cd.scan_file(f)
-#             if virus is not None:
-#                 raise VirusFoundException("Virus %s found in file %s could not upload!" % (virus[f.name][1], f.name))
         if storage is None:
             storage = get_storage()
         if path is None:
