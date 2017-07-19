@@ -41,7 +41,7 @@ def attach(request, session_id):
                 if virus is not None:
                     #if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quaranine, otherwise delete
                     if getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', False):
-                        quarantine_path = '/'.join([getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH'), os.path.basename(path)])
+                        quarantine_path = os.path.join([getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH'), os.path.basename(path)])
                         os.rename(path,quarantine_path)
                     else:
                         os.remove(path)
