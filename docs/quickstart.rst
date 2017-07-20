@@ -47,7 +47,11 @@ Quickstart Guide
             },
             success: function(data) {
                 $('#progress').addClass('hidden');
-            }
+            },
+            error: function(data) {
+                alert("Error attaching file: " + data.error + ".\nPlease contact website administrator if this problem persists.");
+                $('#progress').addClass('hidden');
+            }           
         });
         
 6. Set the ``ATTACHMENT_TEMP_DIR`` setting to the temporary directory you would like files to save in a settings file
