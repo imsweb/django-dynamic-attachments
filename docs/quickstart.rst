@@ -49,7 +49,7 @@ Quickstart Guide
                 $('#progress').addClass('hidden');
             },
             error: function(data) {
-                alert("Error attaching file: " + data.error + ".\nPlease contact website administrator if this problem persists.");
+                alert("Error attaching file:\n" + data.error + "\nPlease contact website administrator if this problem persists.");
                 $('#progress').addClass('hidden');
             }           
         });
