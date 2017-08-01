@@ -8,6 +8,7 @@ from django.shortcuts import render, get_object_or_404
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
 from wsgiref.util import FileWrapper
+from attachments.exceptions import VirusFoundException
 import logging
 import mimetypes
 import os
@@ -22,7 +23,7 @@ def attach(request, session_id):
         # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
         content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
         try:
-            f = request.FILES['attachment']
+            f = request.FILES['attachment']            
             file_uploaded.send(sender=f, request=request, session=session)
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
             temp_dir = getattr(settings, 'ATTACHMENT_TEMP_DIR', None)
@@ -32,8 +33,24 @@ def attach(request, session_id):
             with os.fdopen(fd, 'wb') as fp:
                 for chunk in f.chunks():
                     fp.write(chunk)
+            # After attached file is placed in a temporary file and ATTACHMENTS_CLAMD is active scan it for viruses:
+            if getattr(settings, 'ATTACHMENTS_CLAMD', False):
+                import pyclamd
+                cd = pyclamd.ClamdUnixSocket()
+                virus = cd.scan_file(path)
+                if virus is not None:
+                    #if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quaranine, otherwise delete
+                    if getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', False):
+                        quarantine_path = os.path.join(getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH'), os.path.basename(path))
+                        os.rename(path, quarantine_path)
+                    else:
+                        os.remove(path)
+                    raise VirusFoundException('**WARNING** virus %s found in the file %s, could not upload!' % (virus[path][1], f.name))            
             session.uploads.create(file_path=path, file_name=f.name, file_size=f.size)
             return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size}, content_type=content_type)
+        except VirusFoundException, ex:
+            logger.exception(str(ex))
+            return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
         except Exception, ex:
             logger.exception('Error attaching file to session %s', session_id)
             return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)

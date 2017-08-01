@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from attachments.exceptions import VirusFoundException
 import os
 
 FIELD_TYPE_CHOICES = (
