@@ -7,12 +7,14 @@ from django.http import JsonResponse, StreamingHttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
+from django.core.mail import send_mail
 from wsgiref.util import FileWrapper
 from attachments.exceptions import VirusFoundException
 import logging
 import mimetypes
 import os
 import tempfile
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +42,7 @@ def attach(request, session_id):
                 cd = pyclamd.ClamdUnixSocket()
                 virus = cd.scan_file(path)
                 if virus is not None:
-                    # if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quaranine, otherwise delete
+                    #if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quarantine, otherwise delete
                     if getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', False):
                         quarantine_path = os.path.join(getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH'), os.path.basename(path))
                         os.rename(path, quarantine_path)
@@ -55,8 +57,21 @@ def attach(request, session_id):
                     session.data = {key: value}
             session.save()
             return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size}, content_type=content_type)
-        except VirusFoundException as ex:
-            logger.exception(str(ex))
+        except VirusFoundException, ex:
+            now = datetime.datetime.now()
+            now = now.strftime('%m-%d-%Y  %H:%M:%S')
+            log_message = "User: %s attempted to upload this file: %s with virus signature: %s at %s" % (request.user, f.name, virus[path][1],now)
+            logger.exception(log_message)
+            #if ATTACHMENTS_VIRUS_EMAIL is set to a tuple: (from_email, list_of_emails) it will send email alert
+            if getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL', False):
+                ##send email to email list
+                email_tuple = getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL')
+                from_email = email_tuple[0]
+                email_list = email_tuple[1]
+                subject = 'VIRUS UPLOAD ALERT: %s attempted to upload a file containing a virus to the system' % request.user
+                message = log_message
+                send_mail(subject,message,from_email,email_list)
+                
             return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
         except Exception as ex:
             logger.exception('Error attaching file to session %s', session_id)
