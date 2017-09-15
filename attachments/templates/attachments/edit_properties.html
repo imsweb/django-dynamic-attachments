@@ -6,7 +6,7 @@
         {% csrf_token %}
         <div class="popover-title">
             <button type="button" class="close" aria-hidden="true" data-dismiss="popover"><span class="fa fa-times" aria-hidden="true"></span><span class="sr-only">Close</span></button>
-            <h3>Edit {{ att.file_name }} Properties</h3>
+            <h3 class="long-property-name">Edit {{ att.file_name }} Properties</h3>
         </div>
         <div class="popover-content attachment-properties-form">
             {% include "attachments/form.html" %}
