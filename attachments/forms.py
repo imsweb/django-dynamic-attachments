@@ -59,6 +59,10 @@ class PropertyForm (forms.Form):
             defaults['choices'] = choices
         elif prop.data_type == 'model':
             defaults['queryset'] = prop.model_queryset
+            if defaults.get('required', False):
+                defaults['empty_label'] = None
+        elif prop.data_type == 'boolean':
+            kwargs['initial'] = kwargs.get('initial', False) == 'true'
         defaults.update(kwargs)
         field = field_class(**defaults)
         return field
