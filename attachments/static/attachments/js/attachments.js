@@ -66,7 +66,7 @@
             	if(this.type !== "checkbox"){
             		formData.append($(this).attr('id').slice(3), $(this).val());
             	}else{
-            		formData.append($(this).attr('id').slice(3), $(this).is(':checked'));
+            		formData.append($(this).attr('id').slice(3), $(this).is(':checked') ? 'true' : 'false');
             	}
             })
             var xhr = new XMLHttpRequest();
