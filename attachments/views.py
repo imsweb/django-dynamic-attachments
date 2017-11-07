@@ -1,7 +1,8 @@
 from .forms import PropertyForm
 from .models import Session, Attachment
 from .signals import file_uploaded, file_download
-from .utils import get_storage, url_filename, user_has_access
+from .utils import get_storage, url_filename, user_has_access, sizeof_fmt
+from .exceptions import VirusFoundException, FileSizeException, FileTypeException
 from django.conf import settings
 from django.http import JsonResponse, StreamingHttpResponse, Http404
 from django.shortcuts import render, get_object_or_404
@@ -9,12 +10,13 @@ from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
 from wsgiref.util import FileWrapper
-from attachments.exceptions import VirusFoundException
 import logging
 import mimetypes
 import os
 import tempfile
 import datetime
+from django.conf.global_settings import DEFAULT_FROM_EMAIL
+from test.test_support import get_attribute
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,17 @@ def attach(request, session_id):
         # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
         content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
         try:
+<<<<<<< HEAD
             f = request.FILES['attachment']
+=======
+            f = request.FILES['attachment']  
+            if getattr(settings, 'MAXIMUM_FILE_SIZE', False):
+                if f.size > getattr(settings, 'MAXIMUM_FILE_SIZE'):
+                    raise FileSizeException("File is too large to be uploaded, file cannot be greater than %s" % sizeof_fmt(getattr(settings, 'MAXIMUM_FILE_SIZE')))
+            if getattr(settings, 'ALLOWED_FILE_TYPES', False):
+                if f.content_type not in getattr(settings, 'ALLOWED_FILE_TYPES') and f.content_type.split('/') not in getattr(settings, 'ALLOWED_FILE_TYPES'):
+                    raise FileTypeException("You cannot upload this file type")
+>>>>>>> 851 Add options for max size and file type limiting for attachments
             file_uploaded.send(sender=f, request=request, session=session)
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
             temp_dir = getattr(settings, 'ATTACHMENT_TEMP_DIR', None)
@@ -57,21 +69,29 @@ def attach(request, session_id):
                     session.data = {key: value}
             session.save()
             return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size}, content_type=content_type)
+        except FileSizeException, ex:
+            return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
+        except FileTypeException, ex:
+            return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
         except VirusFoundException, ex:
             now = datetime.datetime.now()
             now = now.strftime('%m-%d-%Y  %H:%M:%S')
-            log_message = "User: %s attempted to upload this file: %s with virus signature: %s at %s" % (request.user, f.name, virus[path][1],now)
+            #request.user may not exist so set up user_prefix to use right prefix for messages on virus upload
+            user = getattr(request, 'user', None)
+            if user:
+                user_prefix = 'User ' + sr(user) + ' '
+            else:
+                user_prefix = 'A user '
+            log_message = "attempted to upload this file: %s with virus signature: %s at %s" % (f.name, virus[path][1],now)
+            log_message = user_prefix + log_message
             logger.exception(log_message)
-            #if ATTACHMENTS_VIRUS_EMAIL is set to a tuple: (from_email, list_of_emails) it will send email alert
+            #if ATTACHMENTS_VIRUS_EMAIL is set to a list/tuple of email addresses to send to it will send email alert
             if getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL', False):
-                ##send email to email list
-                email_tuple = getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL')
-                from_email = email_tuple[0]
-                email_list = email_tuple[1]
-                subject = 'VIRUS UPLOAD ALERT: %s attempted to upload a file containing a virus to the system' % request.user
+                #send email to email list
+                email_list = getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL')
+                subject = 'VIRUS UPLOAD ALERT: " + user_prefix + "attempted to upload a file containing a virus to the system'
                 message = log_message
-                send_mail(subject,message,from_email,email_list)
-                
+                send_mail(subject,message,DEFAULT_FROM_EMAIL,email_list)
             return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
         except Exception as ex:
             logger.exception('Error attaching file to session %s', session_id)
