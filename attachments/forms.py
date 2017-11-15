@@ -37,7 +37,8 @@ class PropertyForm (forms.Form):
         for prop in Property.objects.filter(content_type=content_type):
             if isinstance(instance, Upload):
                 field_key = 'upload-%d-%s' % (instance.pk, prop.slug)
-                self.fields[field_key] = self.formfield(prop, initial=','.join(instance.session.data.get(field_key, []) if instance.session.data else []))
+                self.fields[field_key] = self.formfield(prop, 
+                                                        initial=instance.session.data.get(field_key, None) if instance.session.data else None)
             elif isinstance(instance, Attachment):
                 field_key = 'attachment-%d-%s' % (instance.pk, prop.slug)
                 self.fields[field_key] = self.formfield(prop, initial=','.join(instance.data.get(prop.slug, []) if instance.data else []))
@@ -58,6 +59,10 @@ class PropertyForm (forms.Form):
             defaults['choices'] = choices
         elif prop.data_type == 'model':
             defaults['queryset'] = prop.model_queryset
+            if defaults.get('required', False):
+                defaults['empty_label'] = None
+        elif prop.data_type == 'boolean':
+            kwargs['initial'] = kwargs.get('initial', False) in (True, 'true')
         defaults.update(kwargs)
         field = field_class(**defaults)
         return field

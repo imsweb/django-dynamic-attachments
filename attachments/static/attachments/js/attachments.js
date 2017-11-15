@@ -61,7 +61,14 @@
             var signal = $.Deferred();
             var formData = new FormData();
             formData.append('attachment', file);
-
+	        //include properties data if it exists
+            $(".properties >* :input").each( function() {
+            	if(this.type !== "checkbox"){
+            		formData.append($(this).attr('id').slice(3), $(this).val());
+            	}else{
+            		formData.append($(this).attr('id').slice(3), $(this).is(':checked') ? 'true' : 'false');
+            	}
+            })
             var xhr = new XMLHttpRequest();
             if(settings.progress) {
                 xhr.upload.addEventListener('progress', function(evt) {
