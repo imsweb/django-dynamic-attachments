@@ -107,7 +107,10 @@ class Attachment (models.Model):
         """
             Added for use in bootstrap's template tag render_value. Returns tuple of property label and value
         """
-        return prop.label, self.data.get(prop.slug, [])
+        if prop.data_type == 'model' and prop.slug in self.data:
+            return prop.label, prop.model_queryset.get(pk=self.data.get(prop.slug, [])[0])
+        else:
+            return prop.label, self.data.get(prop.slug, [])
 
 class Property (models.Model):
     label = models.CharField(max_length=200)
