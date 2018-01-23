@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import models
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -46,14 +46,14 @@ class Attachment (models.Model):
     file_path = models.TextField(unique=True)
     file_name = models.CharField(max_length=200)
     file_size = models.IntegerField()
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachments', null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachments', null=True, blank=True, on_delete=models.CASCADE)
     context = models.CharField(max_length=200, blank=True, db_index=True)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
 
     # User-defined data, stored as JSON in a text field.
     data = JSONField(null=True)
 
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey()
 
@@ -143,10 +143,10 @@ class Property (models.Model):
 
 class Session (models.Model):
     uuid = models.CharField(max_length=32, unique=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions', null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions', null=True, blank=True, on_delete=models.CASCADE)
     template = models.CharField(max_length=200, default='attachments/list.html')
     context = models.CharField(max_length=200, blank=True)
-    content_type = models.ForeignKey(ContentType, null=True, blank=True)
+    content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.CASCADE)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
 
     # User-defined data, stored as JSON in a text field.
@@ -231,7 +231,7 @@ class Session (models.Model):
             yield upload, self._forms.get(upload, PropertyForm(instance=upload))
 
 class Upload (models.Model):
-    session = models.ForeignKey(Session, related_name='uploads')
+    session = models.ForeignKey(Session, related_name='uploads', on_delete=models.CASCADE)
     file_path = models.TextField(unique=True)
     file_name = models.CharField(max_length=200)
     file_size = models.IntegerField()
