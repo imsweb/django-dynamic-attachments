@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def attach(request, session_id):
-    session = Session.objects.get(uuid=session_id)
+    session = get_object_or_404(Session, uuid=session_id)
     if request.method == 'POST':
         # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
         content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
         try:
-            f = request.FILES['attachment']            
+            f = request.FILES['attachment']
             file_uploaded.send(sender=f, request=request, session=session)
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
             temp_dir = getattr(settings, 'ATTACHMENT_TEMP_DIR', None)
@@ -39,13 +39,13 @@ def attach(request, session_id):
                 cd = pyclamd.ClamdUnixSocket()
                 virus = cd.scan_file(path)
                 if virus is not None:
-                    #if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quaranine, otherwise delete
+                    # if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quaranine, otherwise delete
                     if getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', False):
                         quarantine_path = os.path.join(getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH'), os.path.basename(path))
                         os.rename(path, quarantine_path)
                     else:
                         os.remove(path)
-                    raise VirusFoundException('**WARNING** virus %s found in the file %s, could not upload!' % (virus[path][1], f.name))            
+                    raise VirusFoundException('**WARNING** virus %s found in the file %s, could not upload!' % (virus[path][1], f.name))
             session.uploads.create(file_path=path, file_name=f.name, file_size=f.size)
             for key, value in request.POST.iteritems():
                 if session.data:
@@ -67,7 +67,7 @@ def attach(request, session_id):
 
 @csrf_exempt
 def delete_upload(request, session_id, upload_id):
-    session = Session.objects.get(uuid=session_id)
+    session = get_object_or_404(Session, uuid=session_id)
     upload = get_object_or_404(session.uploads, pk=upload_id)
     file_name = upload.file_name
     try:
