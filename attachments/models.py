@@ -49,14 +49,14 @@ class Attachment (models.Model):
     file_path = models.TextField(unique=True)
     file_name = models.CharField(max_length=200)
     file_size = models.IntegerField()
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachments', null=True, blank=True, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachments', null=True, blank=True, on_delete=models.SET_NULL)
     context = models.CharField(max_length=200, blank=True, db_index=True)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
 
     # User-defined data, stored as JSON in a text field.
     data = JSONField(null=True)
 
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey()
 
@@ -148,10 +148,10 @@ class Property (models.Model):
 @python_2_unicode_compatible
 class Session (models.Model):
     uuid = models.CharField(max_length=32, unique=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions', null=True, blank=True, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions', null=True, blank=True, on_delete=models.SET_NULL)
     template = models.CharField(max_length=200, default='attachments/list.html')
     context = models.CharField(max_length=200, blank=True)
-    content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.SET_NULL)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
 
     # User-defined data, stored as JSON in a text field.

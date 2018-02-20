@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='session',
             name='content_type',
-            field=models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True, on_delete=models.CASCADE),
+            field=models.ForeignKey(blank=True, to='contenttypes.ContentType', null=True, on_delete=models.SET_NULL),
             preserve_default=True,
         ),
     ]

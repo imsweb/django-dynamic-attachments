@@ -15,13 +15,13 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='attachment',
             name='user',
-            field=models.ForeignKey(related_name='attachments', blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE),
+            field=models.ForeignKey(related_name='attachments', blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='session',
             name='user',
-            field=models.ForeignKey(related_name='attachment_sessions', blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE),
+            field=models.ForeignKey(related_name='attachment_sessions', blank=True, to=settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL),
             preserve_default=True,
         ),
     ]

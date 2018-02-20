@@ -26,8 +26,8 @@ class Migration(migrations.Migration):
                 ('date_created', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
                 ('data', attachments.utils.JSONField(null=True)),
                 ('object_id', models.PositiveIntegerField()),
-                ('content_type', models.ForeignKey(to='contenttypes.ContentType', on_delete=models.CASCADE)),
-                ('user', models.ForeignKey(related_name=b'attachments', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
+                ('content_type', models.ForeignKey(to='contenttypes.ContentType', on_delete=models.SET_NULL)),
+                ('user', models.ForeignKey(related_name=b'attachments', to=settings.AUTH_USER_MODEL, on_delete=models.SET_NULL)),
             ],
             options={
             },
@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 ('template', models.CharField(default=b'attachments/list.html', max_length=200)),
                 ('context', models.CharField(max_length=200, blank=True)),
                 ('date_created', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
-                ('user', models.ForeignKey(related_name=b'attachment_sessions', to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
+                ('user', models.ForeignKey(related_name=b'attachment_sessions', to=settings.AUTH_USER_MODEL, on_delete=models.SET_NULL)),
             ],
             options={
             },
