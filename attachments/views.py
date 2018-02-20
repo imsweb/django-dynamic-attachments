@@ -54,10 +54,10 @@ def attach(request, session_id):
                     session.data = {key: value}
             session.save()
             return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size}, content_type=content_type)
-        except VirusFoundException, ex:
+        except VirusFoundException as ex:
             logger.exception(str(ex))
             return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
-        except Exception, ex:
+        except Exception as ex:
             logger.exception('Error attaching file to session %s', session_id)
             return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
     else:
@@ -73,7 +73,7 @@ def delete_upload(request, session_id, upload_id):
     try:
         upload.delete()
         return JsonResponse({'ok': True})
-    except Exception, ex:
+    except Exception as ex:
         logger.exception('Error deleting upload (pk=%s, file_name=%s) from session %s', upload_id, file_name, session_id)
         return JsonResponse({'ok': False, 'error': unicode(ex)})
 
@@ -112,7 +112,7 @@ def update_attachment(request, attach_id):
                     'ok': False,
                     'form_html': loader.render_to_string('attachments/form.html', {'form': property_form}),
                 })
-        except Exception, ex:
+        except Exception as ex:
             logger.exception('Error updating attachment (pk=%s, file_name=%s)', attach_id, attachment.file_name)
             return JsonResponse({'ok': False, 'error': unicode(ex)})
     raise Http404()

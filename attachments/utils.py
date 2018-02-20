@@ -24,7 +24,7 @@ def session(request, template='attachments/list.html', context='', user=None, co
         return s
     except:
         if user is None:
-            user = request.user if hasattr(request, 'user') and request.user and request.user.is_authenticated() else None
+            user = request.user if hasattr(request, 'user') and request.user and request.user.is_authenticated else None
         if content_type and not isinstance(content_type, ContentType):
             content_type = ContentType.objects.get_for_model(content_type)
         for _i in range(5):
@@ -55,7 +55,7 @@ def user_has_access(request, attachment):
     # Check to see if this attachments model instance has a can_download, otherwise fall back
     # to checking request.user.is_authenticated by default.
     obj = attachment.content_object
-    auth = request.user.is_authenticated()
+    auth = request.user.is_authenticated
     if hasattr(obj, 'can_download'):
         auth = obj.can_download(request, attachment)
         if isinstance(auth, HttpResponse):

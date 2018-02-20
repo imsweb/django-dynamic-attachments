@@ -1,10 +1,12 @@
+from __future__ import unicode_literals
+from django.utils.encoding import python_2_unicode_compatible
 from .signals import attachments_attached
 from .utils import get_context_key, get_storage, get_default_path, JSONField, import_class
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import models
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -42,24 +44,25 @@ class AttachmentManager (models.Manager):
             content_object=obj
         )
 
+@python_2_unicode_compatible
 class Attachment (models.Model):
     file_path = models.TextField(unique=True)
     file_name = models.CharField(max_length=200)
     file_size = models.IntegerField()
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachments', null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachments', null=True, blank=True, on_delete=models.SET_NULL)
     context = models.CharField(max_length=200, blank=True, db_index=True)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
 
     # User-defined data, stored as JSON in a text field.
     data = JSONField(null=True)
 
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey()
 
     objects = AttachmentManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.file_name
 
     def delete(self, **kwargs):
@@ -112,6 +115,7 @@ class Attachment (models.Model):
         else:
             return prop.label, self.data.get(prop.slug, [])
 
+@python_2_unicode_compatible
 class Property (models.Model):
     label = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, help_text='Must be alphanumeric, with no spaces.')
@@ -124,7 +128,7 @@ class Property (models.Model):
     class Meta:
         verbose_name_plural = 'properties'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.label
     
     @property
@@ -141,12 +145,13 @@ class Property (models.Model):
             qs = ModelClass.objects.all()
         return qs
 
+@python_2_unicode_compatible
 class Session (models.Model):
     uuid = models.CharField(max_length=32, unique=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions', null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions', null=True, blank=True, on_delete=models.SET_NULL)
     template = models.CharField(max_length=200, default='attachments/list.html')
     context = models.CharField(max_length=200, blank=True)
-    content_type = models.ForeignKey(ContentType, null=True, blank=True)
+    content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.CASCADE)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
 
     # User-defined data, stored as JSON in a text field.
@@ -158,7 +163,7 @@ class Session (models.Model):
     # Once is_valid is called, stash any PropertyForms to keep per-upload form errors.
     _forms = {}
 
-    def __unicode__(self):
+    def __str__(self):
         return self.uuid
 
     def delete(self, **kwargs):
@@ -230,14 +235,15 @@ class Session (models.Model):
         for upload in self.uploads.all():
             yield upload, self._forms.get(upload, PropertyForm(instance=upload))
 
+@python_2_unicode_compatible
 class Upload (models.Model):
-    session = models.ForeignKey(Session, related_name='uploads')
+    session = models.ForeignKey(Session, related_name='uploads', on_delete=models.CASCADE)
     file_path = models.TextField(unique=True)
     file_name = models.CharField(max_length=200)
     file_size = models.IntegerField()
     date_created = models.DateTimeField(default=timezone.now)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.file_name
 
     def delete(self, **kwargs):
