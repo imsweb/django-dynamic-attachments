@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('date_created', models.DateTimeField(default=django.utils.timezone.now, editable=False)),
                 ('data', attachments.utils.JSONField(null=True)),
                 ('object_id', models.PositiveIntegerField()),
-                ('content_type', models.ForeignKey(to='contenttypes.ContentType', on_delete=models.SET_NULL)),
+                ('content_type', models.ForeignKey(to='contenttypes.ContentType', on_delete=models.CASCADE)),
                 ('user', models.ForeignKey(related_name=b'attachments', to=settings.AUTH_USER_MODEL, on_delete=models.SET_NULL)),
             ],
             options={
