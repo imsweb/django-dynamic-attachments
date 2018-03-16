@@ -111,7 +111,8 @@ def update_attachment(request, attach_id):
         raise Http404()
     if request.is_ajax() and request.method == 'POST':
         try:
-            property_form = PropertyForm(request.POST, instance=attachment)
+            excluded_slugs= request.GET.getlist("excluded_slugs", []) or getattr(settings, "ATTACHMENTS_EDIT_EXCLUDE_PROPERTY_SLUGS", [])
+            property_form = PropertyForm(request.POST, instance=attachment, excluded_slugs=excluded_slugs)
             if property_form.is_valid():
                 attachment.data = attachment.extract_data(request)
                 attachment.save()
@@ -131,9 +132,11 @@ def edit_attachment_properties(request, attach_id):
     attachment = get_object_or_404(Attachment, pk=attach_id)
     if not user_has_access(request, attachment):
         raise Http404()
+    excluded_slugs= request.GET.getlist("excluded_slugs", []) or getattr(settings, "ATTACHMENTS_EDIT_EXCLUDE_PROPERTY_SLUGS", [])
     return render(request, 'attachments/edit_properties.html', {
         'att': attachment,
-        'form': PropertyForm(instance=attachment),
+        'querystring': request.GET.urlencode(),
+        'form': PropertyForm(instance=attachment, excluded_slugs=excluded_slugs),
     })
 
 

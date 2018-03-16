@@ -39,7 +39,7 @@ class PropertyForm (forms.Form):
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.pop('instance')
-
+        excluded_slugs = kwargs.pop("excluded_slugs", [])
         content_type = None
         if isinstance(instance, Attachment):
             content_type = instance.content_type
@@ -48,7 +48,7 @@ class PropertyForm (forms.Form):
 
         super(PropertyForm, self).__init__(*args, **kwargs)
 
-        for prop in Property.objects.filter(content_type=content_type):
+        for prop in Property.objects.exclude(slug__in=excluded_slugs).filter(content_type=content_type):
             if isinstance(instance, Upload):
                 field_key = 'upload-%d-%s' % (instance.pk, prop.slug)
                 self.fields[field_key] = self.formfield(prop,
