@@ -1,4 +1,3 @@
-from bootstrap import widgets
 from django import forms
 
 from .models import Attachment, Property, Upload
@@ -15,13 +14,25 @@ PROPERTY_FIELD_CLASSES = {
 }
 
 PROPERTY_WIDGET_CLASSES = {
-    'text': widgets.Textarea,
-    'date': widgets.DateInput,
+    'text': forms.Textarea,
+    'date': forms.DateInput,
     'choice': forms.Select,
     'model': forms.Select,
     'radio': forms.RadioSelect,
     'boolean': forms.CheckboxInput,
 }
+
+DEFAULT_FORM_CLASS = forms.CharField
+DEFAULT_WIDGET_CLASS = forms.TextInput
+
+try:
+    # XXX: get rid of this
+    from bootstrap import widgets
+    PROPERTY_WIDGET_CLASSES['text'] = widgets.Textarea
+    PROPERTY_WIDGET_CLASSES['date'] = widgets.DateInput
+    DEFAULT_WIDGET_CLASS = widgets.TextInput
+except ImportError:
+    pass
 
 
 class PropertyForm (forms.Form):
@@ -56,11 +67,11 @@ class PropertyForm (forms.Form):
 
     def formfield(self, prop, field_class=None, **kwargs):
         if field_class is None:
-            field_class = PROPERTY_FIELD_CLASSES.get(prop.data_type, forms.CharField)
+            field_class = PROPERTY_FIELD_CLASSES.get(prop.data_type, DEFAULT_FORM_CLASS)
         defaults = {
             'label': prop.label,
             'required': prop.required,
-            'widget': PROPERTY_WIDGET_CLASSES.get(prop.data_type, widgets.TextInput),
+            'widget': PROPERTY_WIDGET_CLASSES.get(prop.data_type, DEFAULT_WIDGET_CLASS),
         }
 
         if prop.data_type == 'date':
