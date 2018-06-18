@@ -11,7 +11,7 @@ setup(
     author_email='watsond@imsweb.com',
     url='https://github.com/imsweb/django-dynamic-attachments',
     license='BSD',
-    packages=find_packages(),
+    packages=find_packages(exclude=('testapp',)),
     include_package_data=True,
     install_requires=[
         'pyclamd',

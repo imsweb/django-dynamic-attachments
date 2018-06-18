@@ -53,7 +53,7 @@ def attach(request, session_id):
                         os.remove(path)
                     raise VirusFoundException('**WARNING** virus %s found in the file %s, could not upload!' % (virus[path][1], f.name))
             session.uploads.create(file_path=path, file_name=f.name, file_size=f.size)
-            for key, value in request.POST.iteritems():
+            for key, value in request.POST.items():
                 if session.data:
                     session.data.update({key: value})
                 else:

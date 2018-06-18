@@ -25,7 +25,7 @@ def session(request, template='attachments/list.html', context='', user=None, co
         s = Session.objects.get(uuid=request.POST[key])
         s._request = request
         return s
-    except Session.DoesNotExist:
+    except (KeyError, Session.DoesNotExist):
         if user is None:
             user = request.user if hasattr(request, 'user') and request.user and request.user.is_authenticated else None
         if content_type and not isinstance(content_type, ContentType):
