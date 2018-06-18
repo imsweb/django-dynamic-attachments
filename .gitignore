@@ -5,3 +5,7 @@
 docs/_build/
 pybin
 coverage_html
+build
+dist
+*.egg-info
+.DS_Store

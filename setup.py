@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
 import attachments
 
 setup(
-    name='attachments',
+    name='django-dynamic-attachments',
     version=attachments.__version__,
     description='A Django application for handling file uploads and attaching them to arbitrary models.',
     author='Dan Watson',
     author_email='watsond@imsweb.com',
-    url='http://imsweb.com',
+    url='https://github.com/imsweb/django-dynamic-attachments',
     license='BSD',
     packages=find_packages(),
     include_package_data=True,
