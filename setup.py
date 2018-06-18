@@ -1,5 +1,7 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
+
 import attachments
+
 
 setup(
     name='django-dynamic-attachments',
@@ -13,6 +15,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'pyclamd',
+        'six',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
