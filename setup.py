@@ -1,5 +1,7 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
+
 import attachments
+
 
 setup(
     name='django-dynamic-attachments',
@@ -15,6 +17,7 @@ setup(
         'pyclamd',
         'python-magic',
         'python-magic-bin;platform_system=="Windows"',
+        'six',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',

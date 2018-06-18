@@ -1,14 +1,29 @@
+<<<<<<< HEAD
 from .forms import PropertyForm
 from .models import Session, Attachment
 from .signals import file_uploaded, file_download
 from .utils import get_storage, url_filename, user_has_access, sizeof_fmt
 from .exceptions import VirusFoundException, FileSizeException, FileTypeException
+=======
+>>>>>>> Started Python 3 compatibility, code formatting, test refactoring
 from django.conf import settings
-from django.http import JsonResponse, StreamingHttpResponse, Http404
-from django.shortcuts import render, get_object_or_404
+from django.http import Http404, JsonResponse, StreamingHttpResponse
+from django.shortcuts import get_object_or_404, render
 from django.template import loader
+from django.utils.encoding import force_text
 from django.views.decorators.csrf import csrf_exempt
+<<<<<<< HEAD
 from django.core.mail import send_mail
+=======
+
+from attachments.exceptions import VirusFoundException
+
+from .forms import PropertyForm
+from .models import Attachment, Session
+from .signals import file_download, file_uploaded
+from .utils import get_storage, url_filename, user_has_access
+
+>>>>>>> Started Python 3 compatibility, code formatting, test refactoring
 from wsgiref.util import FileWrapper
 import logging
 import mimetypes
@@ -18,7 +33,9 @@ import datetime
 from django.conf.global_settings import DEFAULT_FROM_EMAIL
 from test.test_support import get_attribute
 
+
 logger = logging.getLogger(__name__)
+
 
 @csrf_exempt
 def attach(request, session_id):
@@ -95,11 +112,12 @@ def attach(request, session_id):
             return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
         except Exception as ex:
             logger.exception('Error attaching file to session %s', session_id)
-            return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
+            return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
     else:
         return render(request, session.template, {
             'session': session,
         })
+
 
 @csrf_exempt
 def delete_upload(request, session_id, upload_id):
@@ -111,7 +129,8 @@ def delete_upload(request, session_id, upload_id):
         return JsonResponse({'ok': True})
     except Exception as ex:
         logger.exception('Error deleting upload (pk=%s, file_name=%s) from session %s', upload_id, file_name, session_id)
-        return JsonResponse({'ok': False, 'error': unicode(ex)})
+        return JsonResponse({'ok': False, 'error': force_text(ex)})
+
 
 def download(request, attach_id, filename=None):
     attachment = get_object_or_404(Attachment, pk=attach_id)
@@ -125,12 +144,13 @@ def download(request, attach_id, filename=None):
     try:
         # Not all storage backends support getting filesize.
         response['Content-Length'] = storage.size(attachment.file_path)
-    except:
+    except NotImplementedError:
         pass
     if getattr(settings, 'ATTACHMENT_ALWAYS_DOWNLOAD', False) or not filename:
         filename = url_filename(filename or attachment.file_name)
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     return response
+
 
 def update_attachment(request, attach_id):
     attachment = get_object_or_404(Attachment, pk=attach_id)
@@ -150,8 +170,9 @@ def update_attachment(request, attach_id):
                 })
         except Exception as ex:
             logger.exception('Error updating attachment (pk=%s, file_name=%s)', attach_id, attachment.file_name)
-            return JsonResponse({'ok': False, 'error': unicode(ex)})
+            return JsonResponse({'ok': False, 'error': force_text(ex)})
     raise Http404()
+
 
 def edit_attachment_properties(request, attach_id):
     attachment = get_object_or_404(Attachment, pk=attach_id)
@@ -161,6 +182,7 @@ def edit_attachment_properties(request, attach_id):
         'att': attachment,
         'form': PropertyForm(instance=attachment),
     })
+
 
 def view_attachment_properties(request, attach_id):
     attachment = get_object_or_404(Attachment, pk=attach_id)

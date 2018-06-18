@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from django.test import TestCase
+
 from attachments.utils import url_filename
+
 from .models import Document
+
 
 class AttachmentTests (TestCase):
 
