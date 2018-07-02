@@ -1,6 +1,12 @@
+from django.core.exceptions import ValidationError
+
 from .models import Property, Upload, Attachment
 from bootstrap import widgets
 from django import forms
+
+import os
+import magic
+import mimetypes
 
 PROPERTY_FIELD_CLASSES = {
     'date': forms.DateField,
@@ -35,6 +41,7 @@ class PropertyForm (forms.Form):
         super(PropertyForm, self).__init__(*args, **kwargs)
 
         for prop in Property.objects.filter(content_type=content_type):
+            self.validate_atPtachment(instance, prop)
             if isinstance(instance, Upload):
                 field_key = 'upload-%d-%s' % (instance.pk, prop.slug)
                 self.fields[field_key] = self.formfield(prop, 
@@ -66,3 +73,23 @@ class PropertyForm (forms.Form):
         defaults.update(kwargs)
         field = field_class(**defaults)
         return field
+
+    def validate_attachment(self, instance, property):
+        if not property.allowed_file_types:
+            return
+        # Checking if file extension is within allowed extension list
+        allowed_exts = property.allowed_file_types.split(' ')
+        allowed_exts = [x if x.startswith('.') else '.{}'.format(x) for x in allowed_exts]
+        file, ext = os.path.splitext(instance.file_name)
+        if ext not in allowed_exts:
+            error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
+                instance.file_name, ', '.join(allowed_exts))
+            raise ValidationError(error_msg)
+
+        # Checking whether file contents comply with the allowed file extensions.
+        # This ensures that files types not allowed are rejected even if they are renamed.
+        file_type = magic.from_file(instance.file_path, mime=True)
+        if len(list(set(mimetypes.guess_all_extensions(file_type)) & set(allowed_exts))) == 0:
+            error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
+                instance.file_name, ', '.join(allowed_exts))
+            raise ValidationError(error_msg)
