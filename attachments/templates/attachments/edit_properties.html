@@ -2,7 +2,7 @@
 
 <div class="popover">
     <div class="arrow"></div>
-    <form action="{% url "update-attachment" attach_id=att.pk %}" method="post" class="update-attachment">
+    <form action="{% url "update-attachment" attach_id=att.pk %}?{{ querystring }}" method="post" class="update-attachment">
         {% csrf_token %}
         <div class="popover-title">
             <button type="button" class="close" aria-hidden="true" data-dismiss="popover"><span class="fa fa-times" aria-hidden="true"></span><span class="sr-only">Close</span></button>
