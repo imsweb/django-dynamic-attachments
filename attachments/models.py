@@ -126,7 +126,7 @@ class Property (models.Model):
     model = models.CharField(max_length=200, blank=True, help_text='The path to the lookup model for a ModelChoiceField.')
     content_type = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
     required = models.BooleanField(default=True)
-    allowed_file_types = models.CharField(max_length=200, help_text='Space separated file types that are allowed for upload.', blank=True)
+    allowed_file_types = models.TextField(help_text='Whitespace-separated file types that are allowed for upload.', blank=True)
 
     class Meta:
         verbose_name_plural = 'properties'
@@ -240,9 +240,10 @@ class Session (models.Model):
             try:
                 yield None, upload, self._forms.get(upload, PropertyForm(instance=upload))
             except ValidationError as ex:
-                invalid_uploads.append(upload.file_name)
+                invalid_uploads.append(upload)
                 yield ex.message, None, None
-        self.uploads.filter(file_name__in=invalid_uploads).delete()
+        for invalid_upload in invalid_uploads:
+            invalid_upload.delete()
 
 
 @python_2_unicode_compatible

@@ -12,16 +12,8 @@
     {% for error, upload, property_form in session.upload_forms %}
         <tbody class="upload-item">
         {% if error %}
-            <tr>
-                <td colspan="3">
-                    <div class="alert alert-danger alert-dismissable">
-                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
-                            <span class="fa fa-times" title="Close" aria-hidden="true"></span>
-                            <span class="sr-only">Close</span>
-                        </button>
-                        {{ error }}
-                    </div>
-                </td>
+            <tr class="danger">
+                <td colspan="3">{{ error }}</td>
             </tr>
         {% else %}
             <tr>

@@ -74,22 +74,22 @@ class PropertyForm (forms.Form):
         field = field_class(**defaults)
         return field
 
-    def validate_attachment(self, instance, property):
-        if not property.allowed_file_types:
+    def validate_attachment(self, instance, prop):
+        if not prop.allowed_file_types:
             return
         # Checking if file extension is within allowed extension list
-        allowed_exts = property.allowed_file_types.split(' ')
+        allowed_exts = prop.allowed_file_types.split()
         allowed_exts = [x if x.startswith('.') else '.{}'.format(x) for x in allowed_exts]
-        file, ext = os.path.splitext(instance.file_name)
+        filename, ext = os.path.splitext(instance.file_name)
         if ext not in allowed_exts:
             error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
                 instance.file_name, ', '.join(allowed_exts))
             raise ValidationError(error_msg)
 
         # Checking whether file contents comply with the allowed file extensions.
-        # This ensures that files types not allowed are rejected even if they are renamed.
+        # This ensures that file types not allowed are rejected even if they are renamed.
         file_type = magic.from_file(instance.file_path, mime=True)
-        if len(list(set(mimetypes.guess_all_extensions(file_type)) & set(allowed_exts))) == 0:
+        if set(mimetypes.guess_all_extensions(file_type)).isdisjoint(set(allowed_exts)):
             error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
                 instance.file_name, ', '.join(allowed_exts))
             raise ValidationError(error_msg)
