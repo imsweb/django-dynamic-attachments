@@ -41,7 +41,7 @@ class PropertyForm (forms.Form):
         super(PropertyForm, self).__init__(*args, **kwargs)
 
         for prop in Property.objects.filter(content_type=content_type):
-            self.validate_atPtachment(instance, prop)
+            self.validate_attachment(instance, prop)
             if isinstance(instance, Upload):
                 field_key = 'upload-%d-%s' % (instance.pk, prop.slug)
                 self.fields[field_key] = self.formfield(prop, 
