@@ -1,5 +1,6 @@
 from django import forms
 
+from django.db.models import Q
 from .models import Attachment, Property, Upload
 
 
@@ -39,6 +40,7 @@ class PropertyForm (forms.Form):
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.pop('instance')
+        editable_only = kwargs.pop('editable_only', True)
 
         content_type = None
         if isinstance(instance, Attachment):
@@ -48,7 +50,11 @@ class PropertyForm (forms.Form):
 
         super(PropertyForm, self).__init__(*args, **kwargs)
 
-        for prop in Property.objects.filter(content_type=content_type):
+        query = Q(content_type=content_type)
+        if editable_only:
+            query = Q(query, is_editable=True)
+
+        for prop in Property.objects.filter(query):
             if isinstance(instance, Upload):
                 field_key = 'upload-%d-%s' % (instance.pk, prop.slug)
                 self.fields[field_key] = self.formfield(prop,
