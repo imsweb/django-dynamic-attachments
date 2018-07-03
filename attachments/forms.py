@@ -31,6 +31,7 @@ class PropertyForm (forms.Form):
 
     def __init__(self, *args, **kwargs):
         instance = kwargs.pop('instance')
+        editable_only = kwargs.pop('editable_only', True)
 
         content_type = None
         if isinstance(instance, Attachment):
@@ -40,7 +41,11 @@ class PropertyForm (forms.Form):
 
         super(PropertyForm, self).__init__(*args, **kwargs)
 
-        for prop in Property.objects.filter(content_type=content_type):
+        qs = Property.objects.filter(content_type=content_type)
+        if editable_only:
+            qs = qs.filter(is_editable=True)
+
+        for prop in qs:
             self.validate_attachment(instance, prop)
             if isinstance(instance, Upload):
                 field_key = 'upload-%d-%s' % (instance.pk, prop.slug)

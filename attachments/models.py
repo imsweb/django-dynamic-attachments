@@ -126,6 +126,7 @@ class Property (models.Model):
     model = models.CharField(max_length=200, blank=True, help_text='The path to the lookup model for a ModelChoiceField.')
     content_type = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
     required = models.BooleanField(default=True)
+    is_editable = models.BooleanField(default=True)
     allowed_file_types = models.TextField(help_text='Whitespace-separated file types that are allowed for upload.', blank=True)
 
     class Meta:
