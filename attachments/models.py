@@ -124,6 +124,7 @@ class Property (models.Model):
     model = models.CharField(max_length=200, blank=True, help_text='The path to the lookup model for a ModelChoiceField.')
     content_type = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
     required = models.BooleanField(default=True)
+    is_editable = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural = 'properties'
