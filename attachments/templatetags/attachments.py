@@ -1,6 +1,5 @@
 from django import template
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Q
 
 from ..forms import PropertyForm
 from ..models import Property
@@ -13,10 +12,10 @@ register = template.Library()
 def has_attachment_properties(content_type, editable_only=False):
     if not isinstance(content_type, ContentType):
         content_type = ContentType.objects.get_for_model(content_type)
-    query = Q(content_type=content_type)
+    qs = Property.objects.filter(content_type=content_type)
     if editable_only:
-        query = Q(query, is_editable=True)
-    return Property.objects.filter(query).exists()
+        qs = qs.filter(is_editable=True)
+    return qs.exists()
 
 
 @register.filter
