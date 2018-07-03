@@ -1,12 +1,15 @@
-from django.contrib import admin
 from django import forms
+from django.contrib import admin
+
 from .models import Attachment, Property, Session, Upload
 from .utils import import_class
+
 
 class AttachmentAdmin (admin.ModelAdmin):
     list_display = ('file_path', 'file_name', 'file_size', 'content_type', 'context', 'date_created')
     readonly_fields = ('data',)
-    
+
+
 class PropertyForm (forms.ModelForm):
 
     def clean_model(self):
@@ -14,9 +17,10 @@ class PropertyForm (forms.ModelForm):
         if model:
             try:
                 import_class(model)
-            except:
+            except ImportError:
                 raise forms.ValidationError("Improper path to lookup model.")
         return self.cleaned_data['model']
+
 
 class PropertyAdmin (admin.ModelAdmin):
     form = PropertyForm
@@ -24,13 +28,16 @@ class PropertyAdmin (admin.ModelAdmin):
     prepopulated_fields = {'slug': ('label',)}
     filter_horizontal = ('content_type',)
 
+
 class UploadInline (admin.TabularInline):
     model = Upload
     extra = 0
 
+
 class SessionAdmin (admin.ModelAdmin):
     list_display = ('uuid', 'user', 'template', 'context', 'date_created')
     inlines = (UploadInline,)
+
 
 admin.site.register(Attachment, AttachmentAdmin)
 admin.site.register(Session, SessionAdmin)

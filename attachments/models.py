@@ -1,17 +1,20 @@
 from __future__ import unicode_literals
-from django.utils.encoding import python_2_unicode_compatible
-from .signals import attachments_attached
-from .utils import get_context_key, get_storage, get_default_path, JSONField, import_class
+
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
-from django.urls import reverse
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
-from attachments.exceptions import VirusFoundException
+
+from .signals import attachments_attached
+from .utils import JSONField, get_context_key, get_default_path, get_storage, import_class
+
 import os
+
 
 FIELD_TYPE_CHOICES = (
     ('string', 'Text'),
@@ -24,6 +27,7 @@ FIELD_TYPE_CHOICES = (
     ('choice', 'Choice'),
     ('model', 'Model')
 )
+
 
 class AttachmentManager (models.Manager):
 
@@ -43,6 +47,7 @@ class AttachmentManager (models.Manager):
             data=data,
             content_object=obj
         )
+
 
 @python_2_unicode_compatible
 class Attachment (models.Model):
@@ -68,7 +73,7 @@ class Attachment (models.Model):
     def delete(self, **kwargs):
         try:
             get_storage().delete(self.file_path)
-        except:
+        except Exception:
             pass
         super(Attachment, self).delete(**kwargs)
 
@@ -115,6 +120,7 @@ class Attachment (models.Model):
         else:
             return prop.label, self.data.get(prop.slug, [])
 
+
 @python_2_unicode_compatible
 class Property (models.Model):
     label = models.CharField(max_length=200)
@@ -124,17 +130,18 @@ class Property (models.Model):
     model = models.CharField(max_length=200, blank=True, help_text='The path to the lookup model for a ModelChoiceField.')
     content_type = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
     required = models.BooleanField(default=True)
+    is_editable = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural = 'properties'
 
     def __str__(self):
         return self.label
-    
+
     @property
     def choice_list(self):
         return [ch.strip() for ch in self.choices.split('\n') if ch.strip()]
-    
+
     @property
     def model_queryset(self):
         ModelClass = import_class(self.model)
@@ -144,6 +151,7 @@ class Property (models.Model):
         else:
             qs = ModelClass.objects.all()
         return qs
+
 
 @python_2_unicode_compatible
 class Session (models.Model):
@@ -235,6 +243,7 @@ class Session (models.Model):
         for upload in self.uploads.all():
             yield upload, self._forms.get(upload, PropertyForm(instance=upload))
 
+
 @python_2_unicode_compatible
 class Upload (models.Model):
     session = models.ForeignKey(Session, related_name='uploads', on_delete=models.CASCADE)
@@ -249,7 +258,7 @@ class Upload (models.Model):
     def delete(self, **kwargs):
         try:
             os.remove(self.file_path)
-        except:
+        except Exception:
             pass
         super(Upload, self).delete(**kwargs)
 
