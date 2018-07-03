@@ -1,4 +1,6 @@
 from __future__ import unicode_literals
+
+from django.core.exceptions import ValidationError
 from django.utils.encoding import python_2_unicode_compatible
 from .signals import attachments_attached
 from .utils import get_context_key, get_storage, get_default_path, JSONField, import_class
@@ -125,6 +127,7 @@ class Property (models.Model):
     content_type = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
     required = models.BooleanField(default=True)
     is_editable = models.BooleanField(default=True)
+    allowed_file_types = models.TextField(help_text='Whitespace-separated file types that are allowed for upload.', blank=True)
 
     class Meta:
         verbose_name_plural = 'properties'
@@ -233,8 +236,16 @@ class Session (models.Model):
     @property
     def upload_forms(self):
         from .forms import PropertyForm
+        invalid_uploads = []
         for upload in self.uploads.all():
-            yield upload, self._forms.get(upload, PropertyForm(instance=upload))
+            try:
+                yield None, upload, self._forms.get(upload, PropertyForm(instance=upload))
+            except ValidationError as ex:
+                invalid_uploads.append(upload)
+                yield ex.message, None, None
+        for invalid_upload in invalid_uploads:
+            invalid_upload.delete()
+
 
 @python_2_unicode_compatible
 class Upload (models.Model):

@@ -9,8 +9,13 @@
             <th scope="col">Remove</th>
         </tr>
     </thead>
-    {% for upload, property_form in session.upload_forms %}
+    {% for error, upload, property_form in session.upload_forms %}
         <tbody class="upload-item">
+        {% if error %}
+            <tr class="danger">
+                <td colspan="3">{{ error }}</td>
+            </tr>
+        {% else %}
             <tr>
                 <td>{{ upload.file_name }}</td>
                 <td>{{ upload.file_size|filesizeformat }}</td>
@@ -25,6 +30,7 @@
                     <td colspan="3">{% include "attachments/form.html" with form=property_form %}</td>
                 </tr>
             {% endif %}
+        {% endif %}
         </tbody>
     {% endfor %}
 </table>
