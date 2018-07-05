@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 
-from django.core.exceptions import ValidationError
 from django.utils.encoding import python_2_unicode_compatible
 from .signals import attachments_attached
 from .utils import get_context_key, get_storage, get_default_path, JSONField, import_class
@@ -14,6 +13,8 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from attachments.exceptions import VirusFoundException
 import os
+import magic
+import mimetypes
 
 FIELD_TYPE_CHOICES = (
     ('string', 'Text'),
@@ -127,7 +128,6 @@ class Property (models.Model):
     content_type = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
     required = models.BooleanField(default=True)
     is_editable = models.BooleanField(default=True)
-    allowed_file_types = models.TextField(help_text='Whitespace-separated file types that are allowed for upload.', blank=True)
 
     class Meta:
         verbose_name_plural = 'properties'
@@ -157,6 +157,7 @@ class Session (models.Model):
     context = models.CharField(max_length=200, blank=True)
     content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.CASCADE)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
+    allowed_file_types = models.TextField(help_text='Whitespace-separated file types that are allowed for upload.', blank=True)
 
     # User-defined data, stored as JSON in a text field.
     data = JSONField(null=True)
@@ -238,13 +239,35 @@ class Session (models.Model):
         from .forms import PropertyForm
         invalid_uploads = []
         for upload in self.uploads.all():
-            try:
+            error_msg = self.validate_attachment(upload)
+            if not error_msg:
                 yield None, upload, self._forms.get(upload, PropertyForm(instance=upload))
-            except ValidationError as ex:
+            else:
                 invalid_uploads.append(upload)
-                yield ex.message, None, None
+                yield error_msg, None, None
         for invalid_upload in invalid_uploads:
             invalid_upload.delete()
+
+    def validate_attachment(self, upload):
+        if not self.allowed_file_types:
+            return ''
+        # Checking if file extension is within allowed extension list
+        allowed_exts = self.allowed_file_types.split()
+        allowed_exts = [x if x.startswith('.') else '.{}'.format(x) for x in allowed_exts]
+        filename, ext = os.path.splitext(upload.file_name)
+        if ext not in allowed_exts:
+            error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
+                upload.file_name, ', '.join(allowed_exts))
+            return error_msg
+
+        # Checking whether file contents comply with the allowed file extensions.
+        # This ensures that file types not allowed are rejected even if they are renamed.
+        file_type = magic.from_file(upload.file_path, mime=True)
+        if set(mimetypes.guess_all_extensions(file_type)).isdisjoint(set(allowed_exts)):
+            error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
+                upload.file_name, ', '.join(allowed_exts))
+            return error_msg
+        return ''
 
 
 @python_2_unicode_compatible
