@@ -28,7 +28,7 @@ def session(request, template='attachments/list.html', context='', user=None, co
         if content_type and not isinstance(content_type, ContentType):
             content_type = ContentType.objects.get_for_model(content_type)
         if allowed_file_types is None:
-            allowed_file_types = getattr(settings, 'ALLOWED_ATTACHMENT_FILE_TYPES', '')
+            allowed_file_types = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', '')
         for _i in range(5):
             try:
                 s = Session.objects.create(user=user, uuid=uuid.uuid4().hex, template=template, context=context, content_type=content_type, allowed_file_types=allowed_file_types)
