@@ -241,7 +241,7 @@ class Session (models.Model):
         for upload in self.uploads.all():
             error_msg = self.validate_attachment(upload)
             if not error_msg:
-                yield None, upload, self._forms.get(upload, PropertyForm(instance=upload))
+                yield None, upload, self._forms.get(upload, PropertyForm(instance=upload, editable_only=False))
             else:
                 invalid_uploads.append(upload)
                 yield error_msg, None, None
