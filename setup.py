@@ -13,6 +13,8 @@ setup(
     include_package_data=True,
     install_requires=[
         'pyclamd',
+        'python-magic',
+        'python-magic-bin',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
