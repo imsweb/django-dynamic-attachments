@@ -14,7 +14,7 @@ setup(
     install_requires=[
         'pyclamd',
         'python-magic',
-        'python-magic-bin',
+        'python-magic-bin;platform_system=="Windows"',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
