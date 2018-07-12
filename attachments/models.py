@@ -229,7 +229,7 @@ class Session (models.Model):
         from .forms import PropertyForm
         valids = []
         for upload in self.uploads.all():
-            property_form = PropertyForm(self._request.POST, instance=upload)
+            property_form = PropertyForm(self._request.POST, instance=upload, editable_only=False)
             valids.append(property_form.is_valid())
             self._forms[upload] = property_form
         return all(valids)
