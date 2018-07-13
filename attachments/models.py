@@ -260,13 +260,14 @@ class Session (models.Model):
                 upload.file_name, ', '.join(allowed_exts))
             return error_msg
 
-        # Checking whether file contents comply with the allowed file extensions.
+        # Checking whether file contents comply with the allowed file extensions (if the file has data).
         # This ensures that file types not allowed are rejected even if they are renamed.
-        file_type = magic.from_file(upload.file_path, mime=True)
-        if set(mimetypes.guess_all_extensions(file_type)).isdisjoint(set(allowed_exts)):
-            error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
-                upload.file_name, ', '.join(allowed_exts))
-            return error_msg
+        if upload.file_size != 0:
+            file_type = magic.from_file(upload.file_path, mime=True)
+            if set(mimetypes.guess_all_extensions(file_type)).isdisjoint(set(allowed_exts)):
+                error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
+                    upload.file_name, ', '.join(allowed_exts))
+                return error_msg
         return ''
 
 
