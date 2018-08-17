@@ -158,7 +158,7 @@ class Session (models.Model):
     content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.CASCADE)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
     allowed_file_types = models.TextField(help_text='Whitespace-separated file types that are allowed for upload.', blank=True)
-    known_file_types = models.TextField(help_text='An allowed_file_types override in the form of whitespace separated string in the form of file types:file extension', blank=True)
+    known_file_types = JSONField(help_text='An allowed_file_types override in the form of a dictionary with keys being the extension and values the file_type.', null=True)
 
     # User-defined data, stored as JSON in a text field.
     data = JSONField(null=True)
@@ -255,10 +255,6 @@ class Session (models.Model):
         # Checking if file extension is within allowed extension list
         allowed_exts = self.allowed_file_types.split()
         allowed_exts = [x if x.startswith('.') else '.{}'.format(x) for x in allowed_exts]
-        known_exts_list = self.known_file_types.split()
-        known_exts = {}
-        for item in known_exts_list:
-            known_exts[item.split(':')[0]] = item.split(':')[1].split(',')
         filename, ext = os.path.splitext(upload.file_name)
         if ext not in allowed_exts:
             error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
@@ -269,7 +265,7 @@ class Session (models.Model):
         # This ensures that file types not allowed are rejected even if they are renamed.
         if upload.file_size != 0:
             file_type = magic.from_file(upload.file_path, mime=True)
-            if set(mimetypes.guess_all_extensions(file_type)).isdisjoint(set(allowed_exts)) and not (ext in known_exts and file_type in known_exts[ext]):
+            if set(mimetypes.guess_all_extensions(file_type)).isdisjoint(set(allowed_exts)) and not (self.known_file_types and ext in self.known_file_types and file_type in self.known_file_types[ext]):
                 error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
                     upload.file_name, ', '.join(allowed_exts))
                 return error_msg
