@@ -15,7 +15,7 @@ def get_context_key(context):
         return 'attachments-%s' % context
     return 'attachments'
 
-def session(request, template='attachments/list.html', context='', user=None, content_type=None, allowed_file_types=None):
+def session(request, template='attachments/list.html', context='', user=None, content_type=None, allowed_file_types=None, known_file_types=None):
     from .models import Session
     try:
         key = get_context_key(context)
@@ -29,9 +29,11 @@ def session(request, template='attachments/list.html', context='', user=None, co
             content_type = ContentType.objects.get_for_model(content_type)
         if allowed_file_types is None:
             allowed_file_types = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', '')
+        if known_file_types is None:
+            known_file_types = getattr(settings, 'ATTACHMENTS_KNOWN_FILE_TYPES', '')
         for _i in range(5):
             try:
-                s = Session.objects.create(user=user, uuid=uuid.uuid4().hex, template=template, context=context, content_type=content_type, allowed_file_types=allowed_file_types)
+                s = Session.objects.create(user=user, uuid=uuid.uuid4().hex, template=template, context=context, content_type=content_type, allowed_file_types=allowed_file_types, known_file_types=known_file_types)
                 s._request = request
                 return s
             except:
