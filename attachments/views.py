@@ -31,7 +31,6 @@ import os
 import tempfile
 import datetime
 from django.conf.global_settings import DEFAULT_FROM_EMAIL
-from test.test_support import get_attribute
 
 
 logger = logging.getLogger(__name__)
@@ -49,11 +48,11 @@ def attach(request, session_id):
             f = request.FILES['attachment']
 =======
             f = request.FILES['attachment']  
-            if getattr(settings, 'MAXIMUM_FILE_SIZE', False):
-                if f.size > getattr(settings, 'MAXIMUM_FILE_SIZE'):
-                    raise FileSizeException("File is too large to be uploaded, file cannot be greater than %s" % sizeof_fmt(getattr(settings, 'MAXIMUM_FILE_SIZE')))
-            if getattr(settings, 'ALLOWED_FILE_TYPES', False):
-                if f.content_type not in getattr(settings, 'ALLOWED_FILE_TYPES') and f.content_type.split('/') not in getattr(settings, 'ALLOWED_FILE_TYPES'):
+            if getattr(settings, 'ATTACHMENTS_MAXIMUM_FILE_SIZE', False):
+                if f.size > getattr(settings, 'ATTACHMENTS_MAXIMUM_FILE_SIZE'):
+                    raise FileSizeException("File is too large to be uploaded, file cannot be greater than %s" % sizeof_fmt(getattr(settings, 'ATTACHMENTS_MAXIMUM_FILE_SIZE')))
+            if getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', False):
+                if f.content_type not in getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES') and f.content_type.split('/') not in getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES'):
                     raise FileTypeException("You cannot upload this file type")
 >>>>>>> 851 Add options for max size and file type limiting for attachments
             file_uploaded.send(sender=f, request=request, session=session)
@@ -96,7 +95,7 @@ def attach(request, session_id):
             #request.user may not exist so set up user_prefix to use right prefix for messages on virus upload
             user = getattr(request, 'user', None)
             if user:
-                user_prefix = 'User ' + sr(user) + ' '
+                user_prefix = 'User ' + str(user) + ' '
             else:
                 user_prefix = 'A user '
             log_message = "attempted to upload this file: %s with virus signature: %s at %s" % (f.name, virus[path][1],now)
