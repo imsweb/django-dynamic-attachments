@@ -158,6 +158,7 @@ class Session (models.Model):
     content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.CASCADE)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
     allowed_file_types = models.TextField(help_text='Whitespace-separated file types that are allowed for upload.', blank=True)
+    known_file_types = JSONField(help_text='An allowed_file_types override in the form of a dictionary with keys being the extension and values the file_type.', null=True)
 
     # User-defined data, stored as JSON in a text field.
     data = JSONField(null=True)
@@ -264,7 +265,7 @@ class Session (models.Model):
         # This ensures that file types not allowed are rejected even if they are renamed.
         if upload.file_size != 0:
             file_type = magic.from_file(upload.file_path, mime=True)
-            if set(mimetypes.guess_all_extensions(file_type)).isdisjoint(set(allowed_exts)):
+            if set(mimetypes.guess_all_extensions(file_type)).isdisjoint(set(allowed_exts)) and not (self.known_file_types and ext in self.known_file_types and file_type in self.known_file_types[ext]):
                 error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
                     upload.file_name, ', '.join(allowed_exts))
                 return error_msg
