@@ -1,29 +1,21 @@
-<<<<<<< HEAD
-from .forms import PropertyForm
-from .models import Session, Attachment
-from .signals import file_uploaded, file_download
-from .utils import get_storage, url_filename, user_has_access, sizeof_fmt
-from .exceptions import VirusFoundException, FileSizeException, FileTypeException
-=======
->>>>>>> Started Python 3 compatibility, code formatting, test refactoring
+
 from django.conf import settings
 from django.http import Http404, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import loader
 from django.utils.encoding import force_text
 from django.views.decorators.csrf import csrf_exempt
-<<<<<<< HEAD
 from django.core.mail import send_mail
-=======
+
+from settings import DEFAULT_FROM_EMAIL
 
 from attachments.exceptions import VirusFoundException
 
 from .forms import PropertyForm
 from .models import Attachment, Session
 from .signals import file_download, file_uploaded
-from .utils import get_storage, url_filename, user_has_access
-
->>>>>>> Started Python 3 compatibility, code formatting, test refactoring
+from .utils import get_storage, url_filename, user_has_access, sizeof_fmt
+from .exceptions import VirusFoundException, FileSizeException, FileTypeException
 from wsgiref.util import FileWrapper
 import logging
 import mimetypes
@@ -44,18 +36,13 @@ def attach(request, session_id):
         # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
         content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
         try:
-<<<<<<< HEAD
             f = request.FILES['attachment']
-=======
-            f = request.FILES['attachment']  
-            if getattr(settings, 'ATTACHMENTS_MAXIMUM_FILE_SIZE', False):
-                if f.size > getattr(settings, 'ATTACHMENTS_MAXIMUM_FILE_SIZE'):
-                    raise FileSizeException("File is too large to be uploaded, file cannot be greater than %s" % sizeof_fmt(getattr(settings, 'ATTACHMENTS_MAXIMUM_FILE_SIZE')))
-            if getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', False):
-                if f.content_type not in getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES') and f.content_type.split('/') not in getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES'):
-                    raise FileTypeException("You cannot upload this file type")
->>>>>>> 851 Add options for max size and file type limiting for attachments
-            file_uploaded.send(sender=f, request=request, session=session)
+            max_file_size = getattr(settings, 'ATTACHMENTS_MAXIMUM_FILE_SIZE', False)
+            if max_file_size and f.size > max_file_size:
+                raise FileSizeException("File is too large to be uploaded, file cannot be greater than %s" % sizeof_fmt(max_file_size))
+            allowed_file_types = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', False)
+            if allowed_file_types and f.content_type not in allowed_file_types and f.content_type.split('/') not in allowed_file_types:
+                raise FileTypeException("You cannot upload this file type")
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
             temp_dir = getattr(settings, 'ATTACHMENT_TEMP_DIR', None)
             if temp_dir is not None and not os.path.exists(temp_dir):
@@ -95,24 +82,29 @@ def attach(request, session_id):
             #request.user may not exist so set up user_prefix to use right prefix for messages on virus upload
             user = getattr(request, 'user', None)
             if user:
-                user_prefix = 'User ' + str(user) + ' '
+                user_prefix = 'User ' + str(user)
             else:
-                user_prefix = 'A user '
-            log_message = "attempted to upload this file: %s with virus signature: %s at %s" % (f.name, virus[path][1],now)
-            log_message = user_prefix + log_message
+                user_prefix = 'A user'
+            log_message = loader.render_to_string('virus_email.txt', 
+                                                  {'user_prefix': user_prefix,
+                                                   'filename' : f.name,
+                                                   'virus_signature' : virus[path][1],
+                                                   'time' : now,
+                                                   })
             logger.exception(log_message)
             #if ATTACHMENTS_VIRUS_EMAIL is set to a list/tuple of email addresses to send to it will send email alert
             if getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL', False):
                 #send email to email list
                 email_list = getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL')
-                subject = 'VIRUS UPLOAD ALERT: " + user_prefix + "attempted to upload a file containing a virus to the system'
+                subject = 'VIRUS UPLOAD ALERT: " + user_prefix + " attempted to upload a file containing a virus to the system'
                 message = log_message
-                send_mail(subject,message,DEFAULT_FROM_EMAIL,email_list)
-            return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
+                send_mail(subject, message, DEFAULT_FROM_EMAIL, email_list)
+            return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
         except Exception as ex:
             logger.exception('Error attaching file to session %s', session_id)
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
     else:
+        file_uploaded.send(sender=f, request=request, session=session)
         return render(request, session.template, {
             'session': session,
         })

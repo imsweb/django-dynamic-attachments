@@ -1,0 +1,1 @@
+{{ user_prefix }} attempted to upload this file: {{ filename }} with virus signature: {{ virus_signature }} at {{ time }}.
