@@ -6,7 +6,6 @@ from django.utils.encoding import force_text
 from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
 
-from settings import DEFAULT_FROM_EMAIL
 
 from attachments.exceptions import VirusFoundException, FileSizeException, FileTypeException
 
@@ -77,26 +76,19 @@ def attach(request, session_id):
         except VirusFoundException as ex:
             now = datetime.datetime.now()
             now = now.strftime('%m-%d-%Y  %H:%M:%S')
-            #request.user may not exist so set up user_prefix to use right prefix for messages on virus upload
             user = getattr(request, 'user', None)
-            if user:
-                user_prefix = 'User ' + str(user)
-            else:
-                user_prefix = 'A user'
             log_message = loader.render_to_string('virus_email.txt', 
-                                                  {'user_prefix': user_prefix,
+                                                  {'user': user,
                                                    'filename' : f.name,
                                                    'virus_signature' : virus[path][1],
-                                                   'time' : now,
                                                    })
             logger.exception(log_message)
             #if ATTACHMENTS_VIRUS_EMAIL is set to a list/tuple of email addresses to send to it will send email alert
             if getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL', False):
                 #send email to email list
                 email_list = getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL')
-                subject = 'VIRUS UPLOAD ALERT: " + user_prefix + " attempted to upload a file containing a virus to the system'
-                message = log_message
-                send_mail(subject, message, DEFAULT_FROM_EMAIL, email_list)
+                subject = loader.render_to_string('virus_subject.txt', {'user': user })
+                send_mail(subject, log_message, settings.DEFAULT_FROM_EMAIL, email_list)
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
         except Exception as ex:
             logger.exception('Error attaching file to session %s', session_id)
