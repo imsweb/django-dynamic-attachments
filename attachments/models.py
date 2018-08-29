@@ -265,8 +265,8 @@ class Session (models.Model):
         if upload.file_size != 0:
             file_type = magic.from_file(upload.file_path, mime=True)
             if set(mimetypes.guess_all_extensions(file_type)).isdisjoint(set(allowed_exts)):
-                error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
-                    upload.file_name, ', '.join(allowed_exts))
+                error_msg = "{} - Error: The extension for this file is valid, but the content is not. Please verify the file content has been updated and save it again before attempting upload.".format(
+                    upload.file_name)
                 return error_msg
         return ''
 
