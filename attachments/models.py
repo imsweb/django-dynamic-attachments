@@ -157,7 +157,8 @@ class Session (models.Model):
     context = models.CharField(max_length=200, blank=True)
     content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.CASCADE)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
-    allowed_file_types = models.TextField(help_text='Whitespace-separated file types that are allowed for upload.', blank=True)
+    allowed_file_extensions = models.TextField(help_text='Whitespace-separated file extensions that are allowed for upload.', blank=True)
+    allowed_file_types = models.TextField(help_text='White list of file types that are allowed for upload, separated by new line. Used as a fallback if file mimetype is not known.', blank=True)
 
     # User-defined data, stored as JSON in a text field.
     data = JSONField(null=True)
@@ -249,10 +250,10 @@ class Session (models.Model):
             invalid_upload.delete()
 
     def validate_attachment(self, upload):
-        if not self.allowed_file_types:
+        if not self.allowed_file_extensions:
             return ''
         # Checking if file extension is within allowed extension list
-        allowed_exts = self.allowed_file_types.split()
+        allowed_exts = self.allowed_file_extensions.split()
         allowed_exts = [x if x.startswith('.') else '.{}'.format(x) for x in allowed_exts]
         filename, ext = os.path.splitext(upload.file_name)
         if ext not in allowed_exts:
@@ -263,11 +264,16 @@ class Session (models.Model):
         # Checking whether file contents comply with the allowed file extensions (if the file has data).
         # This ensures that file types not allowed are rejected even if they are renamed.
         if upload.file_size != 0:
-            file_type = magic.from_file(upload.file_path, mime=True)
-            if set(mimetypes.guess_all_extensions(file_type)).isdisjoint(set(allowed_exts)):
-                error_msg = "{} - Error: The extension for this file is valid, but the content is not. Please verify the file content has been updated and save it again before attempting upload.".format(
-                    upload.file_name)
-                return error_msg
+            file_mime = magic.from_file(upload.file_path, mime=True)
+            if set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)):
+                # In case our check for extensions didn't pass we check if the file type (not mimetype)
+                # is white-listed. If so, we can allow the file to be uploaded.
+                allowed_types = self.allowed_file_types.split('\n')
+                file_type = magic.from_file(upload.file_path, mime=False)
+                if file_type not in allowed_types:
+                    error_msg = "{} - Error: The extension for this file is valid, but the content is not. Please verify the file content has been updated and save it again before attempting upload.".format(
+                        upload.file_name)
+                    return error_msg
         return ''
 
 
