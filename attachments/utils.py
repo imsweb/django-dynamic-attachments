@@ -15,7 +15,9 @@ def get_context_key(context):
         return 'attachments-%s' % context
     return 'attachments'
 
-def session(request, template='attachments/list.html', context='', user=None, content_type=None, allowed_file_types=None):
+
+def session(request, template='attachments/list.html', context='', user=None, content_type=None,
+            allowed_file_extensions=None, allowed_file_types=None):
     from .models import Session
     try:
         key = get_context_key(context)
@@ -27,24 +29,31 @@ def session(request, template='attachments/list.html', context='', user=None, co
             user = request.user if hasattr(request, 'user') and request.user and request.user.is_authenticated else None
         if content_type and not isinstance(content_type, ContentType):
             content_type = ContentType.objects.get_for_model(content_type)
+        if allowed_file_extensions is None:
+            allowed_file_extensions = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_EXTENSIONS', '')
         if allowed_file_types is None:
             allowed_file_types = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', '')
         for _i in range(5):
             try:
-                s = Session.objects.create(user=user, uuid=uuid.uuid4().hex, template=template, context=context, content_type=content_type, allowed_file_types=allowed_file_types)
+                s = Session.objects.create(user=user, uuid=uuid.uuid4().hex, template=template, context=context,
+                                           content_type=content_type, allowed_file_extensions=allowed_file_extensions,
+                                           allowed_file_types=allowed_file_types)
                 s._request = request
                 return s
             except:
                 pass
         raise Exception('Could not create a unique attachment session')
 
+
 def get_storage():
     cls, kwargs = getattr(settings, 'ATTACHMENT_STORAGE', (settings.DEFAULT_FILE_STORAGE, {}))
     return get_storage_class(cls)(**kwargs)
 
+
 def get_default_path(upload, obj):
     ct = ContentType.objects.get_for_model(obj)
     return '%s/%s/%s/%s/%s' % (ct.app_label, ct.model, obj.pk, upload.session.context, upload.file_name)
+
 
 def url_filename(filename):
     # If the filename is not US-ASCII, we need to urlencode it.
@@ -52,6 +61,7 @@ def url_filename(filename):
         return filename.encode('us-ascii')
     except:
         return urllib.quote(filename.encode('utf-8'), safe='/ ')
+
 
 def user_has_access(request, attachment):
     # Check to see if this attachments model instance has a can_download, otherwise fall back
@@ -63,6 +73,7 @@ def user_has_access(request, attachment):
         if isinstance(auth, HttpResponse):
             return auth
     return auth
+
 
 class JSONField (models.TextField):
 
@@ -89,6 +100,7 @@ class JSONField (models.TextField):
 #    def deconstruct(self):
 #        name, _mod, args, kwargs = super(JSONField, self).deconstruct()
 #        return name, 'attachments.utils.JSONField', args, kwargs
+
 
 def import_class(fq_name):
     module_name, class_name = fq_name.rsplit('.', 1)
