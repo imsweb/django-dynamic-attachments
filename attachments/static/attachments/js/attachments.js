@@ -15,6 +15,7 @@
                 url: settings.url,
                 success: function(html) {
                     $(settings.container).empty().append(html);
+                    $('#attachments').trigger('table-changed');
                 }
             });
         };
@@ -145,6 +146,7 @@
             url: $(this).attr('href'),
             success: function(data) {
                 row.remove();
+                $('#attachments').trigger('table-changed');
             }
         });
         return false;
