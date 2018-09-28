@@ -10,17 +10,18 @@
         </tr>
     </thead>
     {% for error, upload, property_form in session.upload_forms %}
-        <tbody class="upload-item">
         {% if error %}
+        <tbody>
             <tr class="danger">
                 <td colspan="3">{{ error }}</td>
             </tr>
         {% else %}
+        <tbody class="upload-item">
             <tr>
                 <td>{{ upload.file_name }}</td>
                 <td>{{ upload.file_size|filesizeformat }}</td>
                 <td>
-                    <a href="{% url "delete-upload" session_id=session.uuid upload_id=upload.pk %}" class="delete-upload">
+                    <a href="{% url 'delete-upload' session_id=session.uuid upload_id=upload.pk %}" class="delete-upload">
                         {% block delete-upload %}Remove <span class="sr-only">{{ upload.file_name }}</span>{% endblock %}
                     </a>
                 </td>

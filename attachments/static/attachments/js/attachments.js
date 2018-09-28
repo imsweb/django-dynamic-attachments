@@ -14,7 +14,7 @@
             return $.ajax({
                 url: settings.url,
                 success: function(html) {
-                    $(settings.container).empty().append(html);
+                    $(settings.container).empty().append(html).trigger('table-changed');
                 }
             });
         };
@@ -128,6 +128,48 @@
         // Load the initial attachments container.
         refresh();
 
+        $('body').on('click', 'a.delete-upload', function() {
+            var row = $(this).closest('.upload-item');
+            $.ajax({
+                type: 'POST',
+                url: $(this).attr('href'),
+                success: function(data) {
+                    row.remove();
+                    $(settings.container).trigger('table-changed');
+                }
+            });
+            return false;
+        });
+
+        $('body').on('submit', '.update-attachment', function(e) {
+            var postData = $(this).serializeArray();
+            var formURL = $(this).attr('action');
+            var popover = $(this).closest('.popover');
+            var container = $(this).find('.attachment-properties-form');
+            $.ajax({
+                url: formURL,
+                type: 'POST',
+                data: postData,
+                success: function(data, textStatus, jqXHR) {
+                    if(data.ok) {
+                        popover.fadeOut(150);
+                    }
+                    else {
+                        if(data.form_html) {
+                            container.empty().html(data.form_html);
+                        }
+                        else {
+                            alert(data.error);
+                        }
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    alert('Error trying to update attachment properties.');
+                }
+            });
+            return false;
+        });
+
         return this.change(function(e) {
             if(typeof FormData === 'undefined') {
                 iframeUpload(this);
@@ -137,45 +179,6 @@
             }
         });
     };
-    
-    $('body').on('click', 'a.delete-upload', function() {
-        var row = $(this).closest('.upload-item');
-        $.ajax({
-            type: 'POST',
-            url: $(this).attr('href'),
-            success: function(data) {
-                row.remove();
-            }
-        });
-        return false;
-    });
 
-    $('body').on('submit', '.update-attachment', function(e) {
-        var postData = $(this).serializeArray();
-        var formURL = $(this).attr('action');
-        var popover = $(this).closest('.popover');
-        var container = $(this).find('.attachment-properties-form');
-        $.ajax({
-            url: formURL,
-            type: 'POST',
-            data: postData,
-            success: function(data, textStatus, jqXHR) {
-                if(data.ok) {
-                    popover.fadeOut(150);
-                }
-                else {
-                    if(data.form_html) {
-                        container.empty().html(data.form_html);
-                    }
-                    else {
-                        alert(data.error);
-                    }
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                alert('Error trying to update attachment properties.');
-            }
-        });
-        return false;
-    });
+
 }(jQuery));
