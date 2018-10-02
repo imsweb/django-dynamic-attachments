@@ -166,9 +166,6 @@ class Session (models.Model):
     # Stash the request object when calling attachments.session()
     _request = None
 
-    # Once is_valid is called, stash any PropertyForms to keep per-upload form errors.
-    _forms = {}
-
     def __str__(self):
         return self.uuid
 
@@ -232,7 +229,8 @@ class Session (models.Model):
         for upload in self.uploads.all():
             property_form = PropertyForm(self._request.POST, instance=upload, editable_only=False)
             valids.append(property_form.is_valid())
-            self._forms[upload] = property_form
+        # Commit the property data to the database
+        self.set_data()
         return all(valids)
 
     @property
@@ -242,7 +240,14 @@ class Session (models.Model):
         for upload in self.uploads.all():
             error_msg = self.validate_attachment(upload)
             if not error_msg:
-                yield None, upload, self._forms.get(upload, PropertyForm(instance=upload, editable_only=False))
+                property_form = PropertyForm(initial=self.data, instance=upload, editable_only=False)
+                if self.data:
+                    property_key_prefix = 'upload-{}-'.format(upload.pk)
+                    for key in self.data:
+                        # If the property_key_prefix exists in self.data, then we validate the form to show form errors
+                        if key.startswith(property_key_prefix):
+                            property_form.is_valid()
+                yield None, upload, property_form
             else:
                 invalid_uploads.append(upload)
                 yield error_msg, None, None
