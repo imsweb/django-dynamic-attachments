@@ -240,7 +240,7 @@ class Session (models.Model):
         for upload in self.uploads.all():
             error_msg = self.validate_attachment(upload)
             if not error_msg:
-                property_form = PropertyForm(initial=self.data, instance=upload, editable_only=False)
+                property_form = PropertyForm(instance=upload, editable_only=False)
                 if self.data:
                     property_key_prefix = 'upload-{}-'.format(upload.pk)
                     for key in self.data:
