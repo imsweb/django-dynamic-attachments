@@ -1,1 +1,1 @@
-{{ user|default_if_none:"A User" }} attempted to upload this file: {{ filename }} with virus signature: {{ virus_signature }} at {% now %}.
+{{ user|default_if_none:"A User" }} attempted to upload this file: {{ filename }} with virus signature: {{ virus_signature }} at {% now 'c' %}}.

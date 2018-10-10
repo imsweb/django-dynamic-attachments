@@ -19,7 +19,6 @@ import logging
 import mimetypes
 import os
 import tempfile
-import datetime
 
 
 logger = logging.getLogger(__name__)
@@ -74,10 +73,8 @@ def attach(request, session_id):
         except FileTypeException as ex:
             return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
         except VirusFoundException as ex:
-            now = datetime.datetime.now()
-            now = now.strftime('%m-%d-%Y  %H:%M:%S')
             user = getattr(request, 'user', None)
-            log_message = loader.render_to_string('virus_email.txt', 
+            log_message = loader.render_to_string('attachments/virus_email.txt', 
                                                   {'user': user,
                                                    'filename' : f.name,
                                                    'virus_signature' : virus[path][1],
@@ -87,7 +84,7 @@ def attach(request, session_id):
             if getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL', False):
                 #send email to email list
                 email_list = getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL')
-                subject = loader.render_to_string('virus_subject.txt', {'user': user })
+                subject = loader.render_to_string('attachments/virus_subject.txt', {'user': user })
                 send_mail(subject, log_message, settings.DEFAULT_FROM_EMAIL, email_list)
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
         except Exception as ex:
