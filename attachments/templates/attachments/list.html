@@ -9,13 +9,19 @@
             <th scope="col">Remove</th>
         </tr>
     </thead>
-    {% for upload, property_form in session.upload_forms %}
+    {% for error, upload, property_form in session.upload_forms %}
+        {% if error %}
+        <tbody>
+            <tr class="danger">
+                <td colspan="3">{{ error }}</td>
+            </tr>
+        {% else %}
         <tbody class="upload-item">
             <tr>
                 <td>{{ upload.file_name }}</td>
                 <td>{{ upload.file_size|filesizeformat }}</td>
                 <td>
-                    <a href="{% url "delete-upload" session_id=session.uuid upload_id=upload.pk %}" class="delete-upload">
+                    <a href="{% url 'delete-upload' session_id=session.uuid upload_id=upload.pk %}" class="delete-upload">
                         {% block delete-upload %}Remove <span class="sr-only">{{ upload.file_name }}</span>{% endblock %}
                     </a>
                 </td>
@@ -25,6 +31,7 @@
                     <td colspan="3">{% include "attachments/form.html" with form=property_form %}</td>
                 </tr>
             {% endif %}
+        {% endif %}
         </tbody>
     {% endfor %}
 </table>

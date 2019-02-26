@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 
+from django.utils.encoding import python_2_unicode_compatible
+from .signals import attachments_attached
+from .utils import get_context_key, get_storage, get_default_path, JSONField, import_class
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -14,6 +17,8 @@ from .signals import attachments_attached
 from .utils import JSONField, get_context_key, get_default_path, get_storage, import_class
 
 import os
+import magic
+import mimetypes
 
 
 FIELD_TYPE_CHOICES = (
@@ -130,6 +135,7 @@ class Property (models.Model):
     model = models.CharField(max_length=200, blank=True, help_text='The path to the lookup model for a ModelChoiceField.')
     content_type = models.ManyToManyField(ContentType, related_name='attachment_properties', blank=True)
     required = models.BooleanField(default=True)
+    is_editable = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural = 'properties'
@@ -160,15 +166,14 @@ class Session (models.Model):
     context = models.CharField(max_length=200, blank=True)
     content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.CASCADE)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
+    allowed_file_extensions = models.TextField(help_text='Whitespace-separated file extensions that are allowed for upload.', blank=True)
+    allowed_file_types = models.TextField(help_text='White list of file types that are allowed for upload, separated by new line. Used as a fallback if file mimetype is not known.', blank=True)
 
     # User-defined data, stored as JSON in a text field.
     data = JSONField(null=True)
 
     # Stash the request object when calling attachments.session()
     _request = None
-
-    # Once is_valid is called, stash any PropertyForms to keep per-upload form errors.
-    _forms = {}
 
     def __str__(self):
         return self.uuid
@@ -231,16 +236,60 @@ class Session (models.Model):
         from .forms import PropertyForm
         valids = []
         for upload in self.uploads.all():
-            property_form = PropertyForm(self._request.POST, instance=upload)
+            property_form = PropertyForm(self._request.POST, instance=upload, editable_only=False)
             valids.append(property_form.is_valid())
-            self._forms[upload] = property_form
+        # Commit the property data to the database
+        self.set_data()
         return all(valids)
 
     @property
     def upload_forms(self):
         from .forms import PropertyForm
+        invalid_uploads = []
         for upload in self.uploads.all():
-            yield upload, self._forms.get(upload, PropertyForm(instance=upload))
+            error_msg = self.validate_attachment(upload)
+            if not error_msg:
+                property_form = PropertyForm(instance=upload, editable_only=False)
+                if self.data:
+                    property_key_prefix = 'upload-{}-'.format(upload.pk)
+                    for key in self.data:
+                        # If the property_key_prefix exists in self.data, then we validate the form to show form errors
+                        if key.startswith(property_key_prefix):
+                            property_form.is_valid()
+                yield None, upload, property_form
+            else:
+                invalid_uploads.append(upload)
+                yield error_msg, None, None
+        for invalid_upload in invalid_uploads:
+            invalid_upload.delete()
+
+    def validate_attachment(self, upload):
+        if not self.allowed_file_extensions:
+            return ''
+        # Checking if file extension is within allowed extension list
+        allowed_exts = self.allowed_file_extensions.split()
+        allowed_exts = [x if x.startswith('.') else '.{}'.format(x) for x in allowed_exts]
+        filename, ext = os.path.splitext(upload.file_name)
+        if ext not in allowed_exts:
+            error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
+                upload.file_name, ', '.join(allowed_exts))
+            return error_msg
+
+        # Checking whether file contents comply with the allowed file extensions (if the file has data).
+        # This ensures that file types not allowed are rejected even if they are renamed.
+        if upload.file_size != 0:
+            file_mime = magic.from_file(upload.file_path, mime=True)
+            if set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)):
+                # In case our check for extensions didn't pass we check if the file type (not mimetype)
+                # is white-listed. If so, we can allow the file to be uploaded.
+                allowed_types = self.allowed_file_types.split('\n')
+                file_type = magic.from_file(upload.file_path, mime=False)
+                if file_type not in allowed_types:
+                    error_msg = "{} - Error: The extension for this file is valid, but the content is not. Please verify the file content has been updated and save it again before attempting upload.".format(
+                        upload.file_name)
+                    return error_msg
+        return ''
+
 
 
 @python_2_unicode_compatible

@@ -1,2 +1,8 @@
 Django>=2.0,<2.1
 six
+coverage==3.7.1
+django-coverage
+teamcity-messages
+https://git.imsweb.com/watsond/bootstrap/repository/archive.zip
+python-magic>=0.4.15
+python-magic-bin>=0.4.14
