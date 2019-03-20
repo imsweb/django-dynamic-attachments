@@ -186,7 +186,7 @@ class Session (models.Model):
                 prefix = 'upload-%d-' % upload.pk
                 for key in self._request.POST:
                     if key.startswith(prefix):
-                        data[key] = self._request.POST.getlist(key)
+                        data[key] = self._request.POST.get(key)
         return data
 
     def set_data(self, extract_data=None, save=True):
