@@ -67,7 +67,7 @@ class PropertyForm (forms.Form):
             if defaults.get('required', False):
                 defaults['empty_label'] = None
         elif prop.data_type == 'boolean':
-            kwargs['initial'] = kwargs.get('initial', False) in (True, 'true')
+            kwargs['initial'] = kwargs.get('initial', False) in (True, 'true', ['on'], 'on')
         defaults.update(kwargs)
         field = field_class(**defaults)
         return field
