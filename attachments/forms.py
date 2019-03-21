@@ -70,7 +70,7 @@ class PropertyForm (forms.Form):
             kwargs['initial'] = kwargs.get('initial', False) in (True, 'true', ['on'], 'on')
         elif prop.data_type == 'text' or prop.data_type == 'email':
             initial_value = kwargs.get('initial')
-            if type(initial_value) is list and len(initial_value) == 1:
+            if isinstance(initial_value, (list, tuple)) and len(initial_value) > 0:
                 kwargs['initial'] = initial_value[0]
         defaults.update(kwargs)
         field = field_class(**defaults)
