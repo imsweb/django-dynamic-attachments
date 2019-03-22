@@ -56,6 +56,15 @@ class PropertyForm (forms.Form):
             'required': prop.required,
             'widget': PROPERTY_WIDGET_CLASSES.get(prop.data_type, widgets.TextInput),
         }
+
+        # If initial values were deserialized from prop.data, they will be
+        # lists containing only one item, which is the value we want in the field.
+        # This will need to be updated if widgets that can support multiple selections
+        # are added.
+        initial_value = kwargs.get('initial')
+        if isinstance(initial_value, (list, tuple)) and len(initial_value) > 0:
+            kwargs['initial'] = initial_value[0]
+
         if prop.data_type == 'date':
             # TODO: add a property for date display format?
             defaults['widget'] = defaults['widget'](format='%m/%d/%Y')
@@ -67,11 +76,7 @@ class PropertyForm (forms.Form):
             if defaults.get('required', False):
                 defaults['empty_label'] = None
         elif prop.data_type == 'boolean':
-            kwargs['initial'] = kwargs.get('initial', False) in (True, 'true', ['on'], 'on')
-        elif prop.data_type == 'text' or prop.data_type == 'email':
-            initial_value = kwargs.get('initial')
-            if isinstance(initial_value, (list, tuple)) and len(initial_value) > 0:
-                kwargs['initial'] = initial_value[0]
+            kwargs['initial'] = kwargs.get('initial', False) in (True, 'true', 'on')
         defaults.update(kwargs)
         field = field_class(**defaults)
         return field
