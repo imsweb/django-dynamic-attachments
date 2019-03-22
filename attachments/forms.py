@@ -57,7 +57,7 @@ class PropertyForm (forms.Form):
             'widget': PROPERTY_WIDGET_CLASSES.get(prop.data_type, widgets.TextInput),
         }
 
-        # If initial values were deserialized from prop.data, they will be
+        # If initial values were deserialized from Session.data, they will be
         # lists containing only one item, which is the value we want in the field.
         # This will need to be updated if widgets that can support multiple selections
         # are added.
