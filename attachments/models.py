@@ -231,7 +231,9 @@ class Session (models.Model):
             valids.append(property_form.is_valid())
         # Commit the property data to the database
         self.set_data()
-        return all(valids)
+        is_valid = all(valids)
+        self.bind_form_on_refresh = is_valid
+        return is_valid
 
     @property
     def upload_forms(self):
@@ -246,6 +248,7 @@ class Session (models.Model):
                     for key in self.data:
                         # If the property_key_prefix exists in self.data, then we validate the form to show form errors
                         if key.startswith(property_key_prefix):
+                            property_form.is_bound = (self._request is not None and (self._request.method == 'POST' or self._request.GET.get('bind-form-data', False)))
                             property_form.is_valid()
                 yield None, upload, property_form
             else:
