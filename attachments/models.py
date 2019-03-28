@@ -232,7 +232,7 @@ class Session (models.Model):
         # Commit the property data to the database
         self.set_data()
         is_valid = all(valids)
-        self.bind_form_on_refresh = is_valid
+        self.bind_form_on_refresh = not is_valid
         return is_valid
 
     @property
