@@ -85,7 +85,7 @@ class PropertyForm (forms.Form):
         """
         form_data = {}
         if session_data is not None:
-            for key, val in session_data.iteritems():
+            for key, val in session_data.items():
                 if isinstance(val, (list, tuple)) and len(val) > 0:
                     form_val = val[0]
                 else:
