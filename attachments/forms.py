@@ -53,12 +53,15 @@ class PropertyForm (forms.Form):
         if editable_only:
             qs = qs.filter(is_editable=True)
 
+        is_upload = isinstance(instance, Upload)
+        is_attachment = isinstance(instance, Attachment)
+        form_data = self.get_form_data_from_session_data(instance.session.data) if is_upload else {}
         for prop in qs:
-            if isinstance(instance, Upload):
+            if is_upload:
                 field_key = 'upload-%d-%s' % (instance.pk, prop.slug)
-                self.fields[field_key] = self.formfield(prop,
-                                                        initial=instance.session.data.get(field_key, None) if instance.session.data else None)
-            elif isinstance(instance, Attachment):
+                self.fields[field_key] = self.formfield(prop, 
+                                                        initial=form_data.get(field_key, None))
+            elif is_attachment:
                 field_key = 'attachment-%d-%s' % (instance.pk, prop.slug)
                 self.fields[field_key] = self.formfield(prop, initial=','.join(instance.data.get(prop.slug, []) if instance.data else []))
 
@@ -70,6 +73,7 @@ class PropertyForm (forms.Form):
             'required': prop.required,
             'widget': PROPERTY_WIDGET_CLASSES.get(prop.data_type, DEFAULT_WIDGET_CLASS),
         }
+
         if prop.data_type == 'date':
             # TODO: add a property for date display format?
             defaults['widget'] = defaults['widget'](format='%m/%d/%Y')
@@ -81,7 +85,24 @@ class PropertyForm (forms.Form):
             if defaults.get('required', False):
                 defaults['empty_label'] = None
         elif prop.data_type == 'boolean':
-            kwargs['initial'] = kwargs.get('initial', False) in (True, 'true')
+            kwargs['initial'] = kwargs.get('initial', False) in (True, 'true', 'on')
         defaults.update(kwargs)
         field = field_class(**defaults)
         return field
+    
+    @staticmethod
+    def get_form_data_from_session_data(session_data):
+        """
+        This handles converting session.data to a data object that the property form can use for initialization.
+        Deserialized session data will be lists containing only one item, which is the value we want in the field.
+        Note: This will need to be updated if widgets that can support multiple selections are added.
+        """
+        form_data = {}
+        if session_data is not None:
+            for key, val in session_data.items():
+                if isinstance(val, (list, tuple)) and len(val) > 0:
+                    form_val = val[0]
+                else:
+                    form_val = val
+                form_data[key] = form_val
+        return form_data 
