@@ -1,0 +1,1 @@
+VIRUS UPLOAD ALERT: {{ user|default_if_none:"A user" }} attempted to upload a file containing a virus to the system

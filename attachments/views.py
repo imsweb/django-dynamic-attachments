@@ -4,8 +4,10 @@ from django.shortcuts import get_object_or_404, render
 from django.template import loader
 from django.utils.encoding import force_text
 from django.views.decorators.csrf import csrf_exempt
+from django.core.mail import send_mail
 
-from attachments.exceptions import VirusFoundException
+
+from attachments.exceptions import VirusFoundException, FileSizeException, FileTypeException
 
 from .forms import PropertyForm
 from .models import Attachment, Session
@@ -31,6 +33,12 @@ def attach(request, session_id):
         content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
         try:
             f = request.FILES['attachment']
+            max_file_size = getattr(settings, 'ATTACHMENTS_MAXIMUM_FILE_SIZE', False)
+            if max_file_size and f.size > max_file_size:
+                raise FileSizeException("File is too large to be uploaded, file cannot be greater than %s" % sizeof_fmt(max_file_size))
+            allowed_file_types = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', False)
+            if allowed_file_types and f.content_type not in allowed_file_types and f.content_type.split('/') not in allowed_file_types:
+                raise FileTypeException("You cannot upload this file type")
             file_uploaded.send(sender=f, request=request, session=session)
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
             temp_dir = getattr(settings, 'ATTACHMENT_TEMP_DIR', None)
@@ -46,7 +54,7 @@ def attach(request, session_id):
                 cd = pyclamd.ClamdUnixSocket()
                 virus = cd.scan_file(path)
                 if virus is not None:
-                    # if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quaranine, otherwise delete
+                    #if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quarantine, otherwise delete
                     if getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', False):
                         quarantine_path = os.path.join(getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH'), os.path.basename(path))
                         os.rename(path, quarantine_path)
@@ -61,8 +69,24 @@ def attach(request, session_id):
                     session.data = {key: value}
             session.save()
             return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size}, content_type=content_type)
+        except FileSizeException as ex:
+            return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
+        except FileTypeException as ex:
+            return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
         except VirusFoundException as ex:
-            logger.exception(str(ex))
+            user = getattr(request, 'user', None)
+            log_message = loader.render_to_string('attachments/virus_email.txt', 
+                                                  {'user': user,
+                                                   'filename' : f.name,
+                                                   'virus_signature' : virus[path][1],
+                                                   })
+            logger.exception(log_message)
+            #if ATTACHMENTS_VIRUS_EMAIL is set to a list/tuple of email addresses to send to it will send email alert
+            if getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL', False):
+                #send email to email list
+                email_list = getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL')
+                subject = loader.render_to_string('attachments/virus_subject.txt', {'user': user })
+                send_mail(subject, log_message, settings.DEFAULT_FROM_EMAIL, email_list)
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
         except Exception as ex:
             logger.exception('Error attaching file to session %s', session_id)
