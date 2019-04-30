@@ -11,8 +11,11 @@ import io
 
 class AttachmentTests (TestCase):
 
-    def test_url_filename(self):
+    def test_url_filename_character_escaping(self):
         self.assertEqual(url_filename(u'Résumé.pdf'), 'R%C3%A9sum%C3%A9.pdf')
+
+    def test_url_filename_no_escaping(self):
+        self.assertEqual(url_filename('Resume.pdf'), 'Resume.pdf')
 
     def test_json_field(self):
         d = {

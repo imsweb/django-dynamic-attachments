@@ -18,7 +18,8 @@ def get_context_key(context):
     return 'attachments'
 
 
-def session(request, template='attachments/list.html', context='', user=None, content_type=None):
+def session(request, template='attachments/list.html', context='', user=None, content_type=None,
+            allowed_file_extensions=None, allowed_file_types=None):
     from .models import Session
     try:
         key = get_context_key(context)
@@ -30,9 +31,15 @@ def session(request, template='attachments/list.html', context='', user=None, co
             user = request.user if hasattr(request, 'user') and request.user and request.user.is_authenticated else None
         if content_type and not isinstance(content_type, ContentType):
             content_type = ContentType.objects.get_for_model(content_type)
+        if allowed_file_extensions is None:
+            allowed_file_extensions = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_EXTENSIONS', '')
+        if allowed_file_types is None:
+            allowed_file_types = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', '')
         for _i in range(5):
             try:
-                s = Session.objects.create(user=user, uuid=uuid.uuid4().hex, template=template, context=context, content_type=content_type)
+                s = Session.objects.create(user=user, uuid=uuid.uuid4().hex, template=template, context=context,
+                                           content_type=content_type, allowed_file_extensions=allowed_file_extensions,
+                                           allowed_file_types=allowed_file_types)
                 s._request = request
                 return s
             except IntegrityError:
@@ -51,11 +58,8 @@ def get_default_path(upload, obj):
 
 
 def url_filename(filename):
-    # If the filename is not US-ASCII, we need to urlencode it.
-    try:
-        return filename.encode('us-ascii')
-    except UnicodeEncodeError:
-        return quote(filename.encode('utf-8'), safe='/ ')
+    return quote(filename.encode('utf-8'), safe='/ ')
+
 
 
 def user_has_access(request, attachment):

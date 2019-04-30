@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @csrf_exempt
 def attach(request, session_id):
     session = get_object_or_404(Session, uuid=session_id)
+    session._request = request
     if request.method == 'POST':
         # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
         content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
