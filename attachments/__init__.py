@@ -1,4 +1,4 @@
-__version_info__ = (2, 0, 10)
+__version_info__ = (2, 0, 11)
 __version__ = '.'.join(str(i) for i in __version_info__)
 
 def session(*args, **kwargs):
