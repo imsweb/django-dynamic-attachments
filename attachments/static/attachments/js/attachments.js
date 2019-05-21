@@ -12,7 +12,7 @@
         
         var refresh = function() {
         	var data = {};
-        	if (!! settings.container && settings.container.hasClass('bind-form-on-refresh')) {
+        	if (! settings.container && settings.container.hasClass('bind-form-on-refresh')) {
         		data['bind-form-data'] = true;
         		settings.container.removeClass('bind-form-on-refresh');
         	}
