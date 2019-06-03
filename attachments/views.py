@@ -1,4 +1,3 @@
-
 from django.conf import settings
 from django.http import Http404, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -15,6 +14,7 @@ from .models import Attachment, Session
 from .signals import file_download, file_uploaded
 from .utils import get_storage, url_filename, user_has_access, sizeof_fmt
 from .exceptions import VirusFoundException, FileSizeException, FileTypeException
+
 from wsgiref.util import FileWrapper
 import logging
 import mimetypes
@@ -22,6 +22,7 @@ import os
 import tempfile
 import datetime
 from django.conf.global_settings import DEFAULT_FROM_EMAIL
+
 
 
 logger = logging.getLogger(__name__)
@@ -89,7 +90,6 @@ def attach(request, session_id):
                 email_list = getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL')
                 subject = loader.render_to_string('attachments/virus_subject.txt', {'user': user })
                 send_mail(subject, log_message, settings.DEFAULT_FROM_EMAIL, email_list)
-            return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
         except Exception as ex:
             logger.exception('Error attaching file to session %s', session_id)
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)

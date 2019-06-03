@@ -6,7 +6,6 @@ from django.db import IntegrityError, models
 from django.http import HttpResponse
 from six.moves.urllib.parse import quote
 import six
-
 import importlib
 import json
 import uuid
@@ -65,11 +64,7 @@ def get_default_path(upload, obj):
 
 
 def url_filename(filename):
-    # If the filename is not US-ASCII, we need to urlencode it.
-    try:
-        return filename.encode('us-ascii')
-    except UnicodeEncodeError:
-        return quote(filename.encode('utf-8'), safe='/ ')
+    return quote(filename.encode('utf-8'), safe='/ ')
 
 
 
