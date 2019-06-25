@@ -40,12 +40,11 @@ def attach(request, session_id):
                 for chunk in f.chunks():
                     fp.write(chunk)
 
-            upload = Upload(file_path=path, file_name=f.name, file_size=f.size)
+            upload = Upload(file_path=path, file_name=f.name, file_size=f.size, session=session)
             # Validate the upload before we move further
             # This will throw an error if the upload is invalid
             session.validate_upload(upload)
             upload.save()
-            session.uploads.add(upload)
 
             # Update the data for this session (includes all form data for the attachments)
             for key, value in request.POST.items():
