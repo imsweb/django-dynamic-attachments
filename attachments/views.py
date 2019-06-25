@@ -9,7 +9,7 @@ from .forms import PropertyForm
 from .models import Attachment, Session
 from .signals import file_download, file_uploaded, virus_detected
 from .utils import get_storage, url_filename, user_has_access, sizeof_fmt
-from .exceptions import VirusFoundException, FileSizeException, FileTypeException
+from .exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 from datetime import datetime
 from wsgiref.util import FileWrapper
@@ -31,14 +31,6 @@ def attach(request, session_id):
         content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
         try:
             f = request.FILES['attachment']
-            # Defaults to 50Mb (in binary byte size)
-            max_file_size = getattr(settings, 'ATTACHMENTS_MAX_FILE_SIZE_BYTES', 52428800)
-            if max_file_size and f.size > max_file_size:
-                raise FileSizeException("File is too large to be uploaded, file cannot be greater than {}".format(sizeof_fmt(max_file_size)))
-            # This is easily spoofed, so it should only be checked to provide a better user experience
-            allowed_file_types = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', False)
-            if allowed_file_types and f.content_type not in allowed_file_types and f.content_type.split('/') not in allowed_file_types:
-                raise FileTypeException("You cannot upload this file type")
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
             temp_dir = getattr(settings, 'ATTACHMENT_TEMP_DIR', None)
             if temp_dir is not None and not os.path.exists(temp_dir):
@@ -47,31 +39,32 @@ def attach(request, session_id):
             with os.fdopen(fd, 'wb') as fp:
                 for chunk in f.chunks():
                     fp.write(chunk)
-            # After attached file is placed in a temporary file and ATTACHMENTS_CLAMD is active scan it for viruses:
-            if getattr(settings, 'ATTACHMENTS_CLAMD', False):
-                import pyclamd
-                cd = pyclamd.ClamdUnixSocket()
-                virus = cd.scan_file(path)
-                if virus is not None:
-                    #if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quarantine, otherwise delete
-                    if getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', False):
-                        quarantine_path = os.path.join(getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH'), os.path.basename(path))
-                        os.rename(path, quarantine_path)
-                    else:
-                        os.remove(path)
-                    raise VirusFoundException('**WARNING** virus %s found in the file %s, could not upload!' % (virus[path][1], f.name))
-            session.uploads.create(file_path=path, file_name=f.name, file_size=f.size)
+
+            upload = Upload(file_path=path, file_name=f.name, file_size=f.size)
+            # Validate the upload before we move further
+            # This will throw an error if the upload is invalid
+            session.validate_upload(upload)
+            upload.save()
+            session.uploads.add(upload)
+
+            # Update the data for this session (includes all form data for the attachments)
             for key, value in request.POST.items():
                 if session.data:
                     session.data.update({key: value})
                 else:
                     session.data = {key: value}
             session.save()
+
+            # Keeping the sender as 'f' for backwards compatibility
             file_uploaded.send(sender=f, request=request, session=session)
-            return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size}, content_type=content_type)
+            return JsonResponse({'ok': True, 'file_name': upload.file_name, 'file_size': upload.file_size}, content_type=content_type)
+
+        # These errors have helpful messages, so we return them
+        except (InvalidExtensionException, InvalidFileTypeException, FileSizeException) as ex:
+            return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
         except VirusFoundException as ex:
             user = getattr(request, 'user', "Unknown user")
-            filename = f.name
+            filename = upload.file_name
             virus_signature = virus[path][1]
             time_of_upload = datetime.now()
             quarantine_path = quarantine_path if quarantine_path else ''
@@ -87,7 +80,7 @@ def attach(request, session_id):
                                                                                                        quarantine_msg)
             logger.exception(log_message)
 
-            virus_detected.send(sender=f, 
+            virus_detected.send(sender=upload, 
                                 user=user, 
                                 filename=filename, 
                                 virus_signature=virus_signature, 
@@ -96,7 +89,8 @@ def attach(request, session_id):
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
         except Exception as ex:
             logger.exception('Error attaching file to session {}'.format(session_id))
-            return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
+            # Since this is a catch all we need to return a generic error (in case a more sensitive error occurred)
+            return JsonResponse({'ok': False, 'error': 'An error occurred attaching file to the session.'}, content_type=content_type)
     else:
         return render(request, session.template, {
             'session': session,

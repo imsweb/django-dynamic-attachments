@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 
 from .signals import attachments_attached
 from .utils import JSONField, get_context_key, get_default_path, get_storage, import_class
+from .exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 import os
 import magic
@@ -244,55 +245,72 @@ class Session (models.Model):
     @property
     def upload_forms(self):
         from .forms import PropertyForm
-        invalid_uploads = []
         for upload in self.uploads.all():
-            error_msg = self.validate_attachment(upload)
-            if not error_msg:
-                kwargs = {'instance': upload, 'editable_only': False, }
-                is_bound = (self._request is not None and (self._request.method == 'POST' or self._request.GET.get('bind-form-data', False)))
-                if is_bound:
-                    kwargs['data'] = PropertyForm.get_form_data_from_session_data(self.data)
-                property_form = PropertyForm(**kwargs)   
-                if self.data:
-                    property_key_prefix = 'upload-{}-'.format(upload.pk)
-                    for key in self.data:
-                        # If the property_key_prefix exists in self.data, then we validate the form to show form errors
-                        if key.startswith(property_key_prefix):
-                            property_form.is_valid()
-                yield None, upload, property_form
-            else:
-                invalid_uploads.append(upload)
-                yield error_msg, None, None
-        for invalid_upload in invalid_uploads:
-            invalid_upload.delete()
+            kwargs = {'instance': upload, 'editable_only': False, }
+            is_bound = (self._request is not None and (self._request.method == 'POST' or self._request.GET.get('bind-form-data', False)))
+            if is_bound:
+                kwargs['data'] = PropertyForm.get_form_data_from_session_data(self.data)
+            property_form = PropertyForm(**kwargs)   
+            if self.data:
+                property_key_prefix = 'upload-{}-'.format(upload.pk)
+                for key in self.data:
+                    # If the property_key_prefix exists in self.data, then we validate the form to show form errors
+                    if key.startswith(property_key_prefix):
+                        property_form.is_valid()
+            yield upload, property_form
 
-    def validate_attachment(self, upload):
-        if not self.allowed_file_extensions:
-            return ''
+    def validate_upload(self, upload):
+        '''
+        This function validates the given upload by checking:
+           1) The file extension is valid
+           2) The file type (format) is valid
+           3) The file is under the maximum size limit
+           4) The file is free of viruses
+        These checks can be customized, including turning them on/off completely.
+        '''
+
         # Checking if file extension is within allowed extension list
-        allowed_exts = self.allowed_file_extensions.split()
-        allowed_exts = [x if x.startswith('.') else '.{}'.format(x) for x in allowed_exts]
-        filename, ext = os.path.splitext(upload.file_name)
-        if ext not in allowed_exts:
-            error_msg = "{} - Error: Unsupported file format. Supported file formats are: {}".format(
-                upload.file_name, ', '.join(allowed_exts))
-            return error_msg
+        if self.allowed_file_extensions:
+            allowed_exts = self.allowed_file_extensions.split()
+            allowed_exts = [x if x.startswith('.') else '.{}'.format(x) for x in allowed_exts]
+            filename, ext = os.path.splitext(upload.file_name)
+            if ext not in allowed_exts:
+                raise InvalidExtensionException("{} - Error: Unsupported file format. Supported file formats are: {}".format(
+                    upload.file_name, ', '.join(allowed_exts)))
 
-        # Checking whether file contents comply with the allowed file extensions (if the file has data).
-        # This ensures that file types not allowed are rejected even if they are renamed.
-        if upload.file_size != 0:
-            file_mime = magic.from_file(upload.file_path, mime=True)
-            if set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)):
-                # In case our check for extensions didn't pass we check if the file type (not mimetype)
-                # is white-listed. If so, we can allow the file to be uploaded.
-                allowed_types = self.allowed_file_types.split('\n')
-                file_type = magic.from_file(upload.file_path, mime=False)
-                if file_type not in allowed_types:
-                    error_msg = "{} - Error: The extension for this file is valid, but the content is not. Please verify the file content has been updated and save it again before attempting upload.".format(
-                        upload.file_name)
-                    return error_msg
-        return ''
+            # Checking whether file contents comply with the allowed file extensions (if the file has data).
+            # This ensures that file types not allowed are rejected even if they are renamed.
+            if upload.file_size != 0:
+                file_mime = magic.from_file(upload.file_path, mime=True)
+                if set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)):
+                    # In case our check for extensions didn't pass we check if the file type (not mimetype)
+                    # is white-listed. If so, we can allow the file to be uploaded.
+                    allowed_types = self.allowed_file_types.split('\n')
+                    file_type = magic.from_file(upload.file_path, mime=False)
+                    if file_type not in allowed_types:
+                        raise InvalidFileTypeException("{} - Error: The extension for this file is valid, but the content is not. Please verify the file content has been updated and save it again before attempting upload.".format(
+                            upload.file_name))
 
+        # Verify the upload is not over the allowable limit
+        # Defaults to 50Mb (in binary byte size)
+        max_file_size = getattr(settings, 'ATTACHMENTS_MAX_FILE_SIZE_BYTES', 52428800)
+        # max_file_size can be None (which means any size is allowed)
+        if max_file_size and upload.file_size > max_file_size:
+            raise FileSizeException("File is too large to be uploaded, file cannot be greater than {}".format(sizeof_fmt(max_file_size)))
+
+        if getattr(settings, 'ATTACHMENTS_CLAMD', False):
+            # We should explore moving this import in the future
+            import pyclamd
+            cd = pyclamd.ClamdUnixSocket()
+            virus = cd.scan_file(upload.file_path)
+            if virus is not None:
+                #if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quarantine, otherwise delete
+                if getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', False):
+                    quarantine_path = os.path.join(getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH'), os.path.basename(upload.file_path))
+                    os.rename(upload.file_path, quarantine_path)
+                else:
+                    os.remove(upload.file_path)
+                raise VirusFoundException('**WARNING** virus {} found in the file {}, could not upload!'.format(virus[upload.file_path][1], upload.file_name))
 
 
 @python_2_unicode_compatible
