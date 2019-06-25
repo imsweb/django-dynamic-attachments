@@ -4,25 +4,19 @@ from django.shortcuts import get_object_or_404, render
 from django.template import loader
 from django.utils.encoding import force_text
 from django.views.decorators.csrf import csrf_exempt
-from django.core.mail import send_mail
-
-
-from attachments.exceptions import VirusFoundException
 
 from .forms import PropertyForm
 from .models import Attachment, Session
-from .signals import file_download, file_uploaded
+from .signals import file_download, file_uploaded, virus_detected
 from .utils import get_storage, url_filename, user_has_access, sizeof_fmt
 from .exceptions import VirusFoundException, FileSizeException, FileTypeException
 
+from datetime import datetime
 from wsgiref.util import FileWrapper
 import logging
 import mimetypes
 import os
 import tempfile
-import datetime
-from django.conf.global_settings import DEFAULT_FROM_EMAIL
-
 
 
 logger = logging.getLogger(__name__)
@@ -37,9 +31,11 @@ def attach(request, session_id):
         content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
         try:
             f = request.FILES['attachment']
-            max_file_size = getattr(settings, 'ATTACHMENTS_MAXIMUM_FILE_SIZE', False)
+            # Defaults to 50Mb (in binary byte size)
+            max_file_size = getattr(settings, 'ATTACHMENTS_MAX_FILE_SIZE_BYTES', 52428800)
             if max_file_size and f.size > max_file_size:
-                raise FileSizeException("File is too large to be uploaded, file cannot be greater than %s" % sizeof_fmt(max_file_size))
+                raise FileSizeException("File is too large to be uploaded, file cannot be greater than {}".format(sizeof_fmt(max_file_size)))
+            # This is easily spoofed, so it should only be checked to provide a better user experience
             allowed_file_types = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', False)
             if allowed_file_types and f.content_type not in allowed_file_types and f.content_type.split('/') not in allowed_file_types:
                 raise FileTypeException("You cannot upload this file type")
@@ -71,30 +67,37 @@ def attach(request, session_id):
                 else:
                     session.data = {key: value}
             session.save()
+            file_uploaded.send(sender=f, request=request, session=session)
             return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size}, content_type=content_type)
-        except FileSizeException, ex:
-            return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
-        except FileTypeException, ex:
-            return JsonResponse({'ok': False, 'error': unicode(ex)}, content_type=content_type)
         except VirusFoundException as ex:
-            user = getattr(request, 'user', None)
-            log_message = loader.render_to_string('attachments/virus_email.txt', 
-                                                  {'user': user,
-                                                   'filename' : f.name,
-                                                   'virus_signature' : virus[path][1],
-                                                   })
+            user = getattr(request, 'user', "Unknown user")
+            filename = f.name
+            virus_signature = virus[path][1]
+            time_of_upload = datetime.now()
+            quarantine_path = quarantine_path if quarantine_path else ''
+            if quarantine_path:
+                quarantine_msg = 'File has been quarantined here: {}'.format(quarantine_path)
+            else:
+                quarantine_msg = 'File has been removed from the system'
+
+            log_message = "{} attempted to upload file: {} with virus signature: {} at {}. {}.".format(user, 
+                                                                                                       filename, 
+                                                                                                       virus_signature, 
+                                                                                                       time_of_upload.strftime('%Y-%m-%d %H:%M:%S'), 
+                                                                                                       quarantine_msg)
             logger.exception(log_message)
-            #if ATTACHMENTS_VIRUS_EMAIL is set to a list/tuple of email addresses to send to it will send email alert
-            if getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL', False):
-                #send email to email list
-                email_list = getattr(settings, 'ATTACHMENTS_VIRUS_EMAIL')
-                subject = loader.render_to_string('attachments/virus_subject.txt', {'user': user })
-                send_mail(subject, log_message, settings.DEFAULT_FROM_EMAIL, email_list)
+
+            virus_detected.send(sender=f, 
+                                user=user, 
+                                filename=filename, 
+                                virus_signature=virus_signature, 
+                                time_of_upload=time_of_upload, 
+                                quarantine_path=quarantine_path)
+            return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
         except Exception as ex:
-            logger.exception('Error attaching file to session %s', session_id)
+            logger.exception('Error attaching file to session {}'.format(session_id))
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
     else:
-        file_uploaded.send(sender=f, request=request, session=session)
         return render(request, session.template, {
             'session': session,
         })

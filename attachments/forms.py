@@ -59,9 +59,9 @@ class PropertyForm (forms.Form):
         for prop in qs:
             if is_upload:
                 field_key = 'upload-%d-%s' % (instance.pk, prop.slug)
-                self.fields[field_key] = self.formfield(prop,
-                                                        initial=instance.session.data.get(field_key, None) if instance.session.data else None)
-            elif isinstance(instance, Attachment):
+                initial_data = form_data.get(field_key, None) if form_data else None
+                self.fields[field_key] = self.formfield(prop, initial=initial_data)
+            elif is_attachment:
                 field_key = 'attachment-%d-%s' % (instance.pk, prop.slug)
                 self.fields[field_key] = self.formfield(prop, initial=','.join(instance.data.get(prop.slug, []) if instance.data else []))
 

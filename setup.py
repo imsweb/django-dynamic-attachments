@@ -18,7 +18,6 @@ setup(
         'six',
         'python-magic',
         'python-magic-bin;platform_system=="Windows"',
-        'six',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',

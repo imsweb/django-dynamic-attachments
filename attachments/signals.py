@@ -9,3 +9,8 @@ file_download = Signal(providing_args=('request',))
 
 # Sent when attachments are attached to an object (i.e. saved)
 attachments_attached = Signal(providing_args=('obj', 'attachments'))
+
+# Sent when a virus was detected during an upload
+# NOTE: 'quarantine_path' may be an empty string if the file was deleted instead of quarantined
+# NOTE: The 'sender' will be the Django object representing the offending file. The actual file will have been moved or removed.
+virus_detected = Signal(providing_args=('user', 'filename', 'virus_signature', 'time_of_upload', 'quarantine_path'))
