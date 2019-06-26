@@ -66,10 +66,15 @@ def attach(request, session_id):
             filename = upload.file_name
             virus_signature = virus[path][1]
             time_of_upload = datetime.now()
-            quarantine_path = quarantine_path if quarantine_path else ''
-            if quarantine_path:
+            #if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quarantine, otherwise delete
+            attachments_quarantine_path = getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', None)
+            if attachments_quarantine_path:
+                quarantine_path = os.path.join(attachments_quarantine_path, os.path.basename(upload.file_path))
+                os.rename(upload.file_path, quarantine_path)
                 quarantine_msg = 'File has been quarantined here: {}'.format(quarantine_path)
             else:
+                os.remove(upload.file_path)
+                quarantine_path = None
                 quarantine_msg = 'File has been removed from the system'
 
             log_message = "{} attempted to upload file: {} with virus signature: {} at {}. {}.".format(user, 

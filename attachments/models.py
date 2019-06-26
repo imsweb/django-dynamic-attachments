@@ -304,12 +304,6 @@ class Session (models.Model):
             cd = pyclamd.ClamdUnixSocket()
             virus = cd.scan_file(upload.file_path)
             if virus is not None:
-                #if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quarantine, otherwise delete
-                if getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', False):
-                    quarantine_path = os.path.join(getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH'), os.path.basename(upload.file_path))
-                    os.rename(upload.file_path, quarantine_path)
-                else:
-                    os.remove(upload.file_path)
                 raise VirusFoundException('**WARNING** virus {} found in the file {}, could not upload!'.format(virus[upload.file_path][1], upload.file_name))
 
 
