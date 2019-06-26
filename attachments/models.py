@@ -11,7 +11,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 
 from .signals import attachments_attached
-from .utils import JSONField, get_context_key, get_default_path, get_storage, import_class
+from .utils import JSONField, get_context_key, get_default_path, get_storage, import_class, sizeof_fmt
 from .exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 import os

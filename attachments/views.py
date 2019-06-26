@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .forms import PropertyForm
 from .models import Attachment, Session, Upload
 from .signals import file_download, file_uploaded, virus_detected
-from .utils import get_storage, url_filename, user_has_access, sizeof_fmt
+from .utils import get_storage, url_filename, user_has_access
 from .exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 from datetime import datetime
