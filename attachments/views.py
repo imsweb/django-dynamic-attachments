@@ -64,7 +64,6 @@ def attach(request, session_id):
         except VirusFoundException as ex:
             user = getattr(request, 'user', "Unknown user")
             filename = upload.file_name
-            virus_signature = virus[path][1]
             time_of_upload = datetime.now()
             #if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quarantine, otherwise delete
             attachments_quarantine_path = getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', None)
