@@ -77,17 +77,17 @@ def attach(request, session_id):
                 quarantine_path = None
                 quarantine_msg = 'File has been removed from the system'
 
-            log_message = "{} attempted to upload file: {} with virus signature: {} at {}. {}.".format(user, 
-                                                                                                       filename, 
-                                                                                                       virus_signature, 
-                                                                                                       time_of_upload.strftime('%Y-%m-%d %H:%M:%S'), 
-                                                                                                       quarantine_msg)
+            error_msg = force_text(ex)
+            log_message = "{} - Uploaded by {} at {}. {}.".format(error_msg,
+                                                                  user,
+                                                                  time_of_upload.strftime('%Y-%m-%d %H:%M:%S'), 
+                                                                  quarantine_msg)
             logger.exception(log_message)
 
             virus_detected.send(sender=upload, 
                                 user=user, 
                                 filename=filename, 
-                                virus_signature=virus_signature, 
+                                exception=ex, 
                                 time_of_upload=time_of_upload, 
                                 quarantine_path=quarantine_path)
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)

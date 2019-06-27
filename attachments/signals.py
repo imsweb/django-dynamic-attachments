@@ -11,6 +11,6 @@ file_download = Signal(providing_args=('request',))
 attachments_attached = Signal(providing_args=('obj', 'attachments'))
 
 # Sent when a virus was detected during an upload
-# NOTE: 'quarantine_path' may be an empty string if the file was deleted instead of quarantined
+# NOTE: 'quarantine_path' may be None if the file was deleted instead of quarantined
 # NOTE: The 'sender' will be the Upload object representing the offending file. The actual file will have been moved or removed.
-virus_detected = Signal(providing_args=('user', 'filename', 'virus_signature', 'time_of_upload', 'quarantine_path'))
+virus_detected = Signal(providing_args=('user', 'filename', 'exception', 'time_of_upload', 'quarantine_path'))

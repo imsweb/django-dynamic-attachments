@@ -304,7 +304,7 @@ class Session (models.Model):
             cd = pyclamd.ClamdUnixSocket()
             virus = cd.scan_file(upload.file_path)
             if virus is not None:
-                raise VirusFoundException('**WARNING** virus {} found in the file {}, could not upload!'.format(virus[upload.file_path][1], upload.file_name))
+                raise VirusFoundException('**WARNING** virus: "{}" found in the file: "{}", could not upload!'.format(virus[upload.file_path][1], upload.file_name))
 
 
 @python_2_unicode_compatible
