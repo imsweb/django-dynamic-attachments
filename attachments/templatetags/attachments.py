@@ -1,9 +1,12 @@
 from django import template
 from django.contrib.contenttypes.models import ContentType
+
 from ..forms import PropertyForm
 from ..models import Property
 
+
 register = template.Library()
+
 
 @register.filter
 def has_attachment_properties(content_type, editable_only=False):
@@ -13,6 +16,7 @@ def has_attachment_properties(content_type, editable_only=False):
     if editable_only:
         qs = qs.filter(is_editable=True)
     return qs.exists()
+
 
 @register.filter
 def attachment_properties_form(obj, editable_only=True):

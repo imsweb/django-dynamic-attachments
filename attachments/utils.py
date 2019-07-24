@@ -2,13 +2,22 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import get_storage_class
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import IntegrityError, models
 from django.http import HttpResponse
-from django.db import models
-import json
-import urllib
-import uuid
-import importlib
+from six.moves.urllib.parse import quote
+import six
 
+import importlib
+import json
+import uuid
+
+
+def sizeof_fmt(num, suffix='B'):
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
 
 def get_context_key(context):
     if context:
@@ -24,7 +33,7 @@ def session(request, template='attachments/list.html', context='', user=None, co
         s = Session.objects.get(uuid=request.POST[key])
         s._request = request
         return s
-    except:
+    except (KeyError, Session.DoesNotExist):
         if user is None:
             user = request.user if hasattr(request, 'user') and request.user and request.user.is_authenticated else None
         if content_type and not isinstance(content_type, ContentType):
@@ -40,7 +49,7 @@ def session(request, template='attachments/list.html', context='', user=None, co
                                            allowed_file_types=allowed_file_types)
                 s._request = request
                 return s
-            except:
+            except IntegrityError:
                 pass
         raise Exception('Could not create a unique attachment session')
 
@@ -59,8 +68,9 @@ def url_filename(filename):
     # If the filename is not US-ASCII, we need to urlencode it.
     try:
         return filename.encode('us-ascii')
-    except:
-        return urllib.quote(filename.encode('utf-8'), safe='/ ')
+    except UnicodeEncodeError:
+        return quote(filename.encode('utf-8'), safe='/ ')
+
 
 
 def user_has_access(request, attachment):
@@ -80,7 +90,7 @@ class JSONField (models.TextField):
     def to_python(self, value):
         if value == '':
             return None
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return json.loads(value)
         return value
 
