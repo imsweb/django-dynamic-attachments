@@ -37,7 +37,7 @@ except ImportError:
 
 class PropertyForm (forms.Form):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, backend_data=None, **kwargs):
         instance = kwargs.pop('instance')
         editable_only = kwargs.pop('editable_only', True)
 
@@ -56,16 +56,24 @@ class PropertyForm (forms.Form):
         is_upload = isinstance(instance, Upload)
         is_attachment = isinstance(instance, Attachment)
         form_data = self.get_form_data_from_session_data(instance.session.data) if is_upload else {}
+        
+        if not backend_data:
+            backend_data = instance.session.backend_data
+
         for prop in qs:
             if is_upload:
                 field_key = 'upload-%d-%s' % (instance.pk, prop.slug)
                 self.fields[field_key] = self.formfield(prop, 
-                                                        initial=form_data.get(field_key, None))
+                                                        initial=form_data.get(field_key, None),
+                                                        backend_data=backend_data, 
+                                                        **kwargs)
             elif is_attachment:
                 field_key = 'attachment-%d-%s' % (instance.pk, prop.slug)
-                self.fields[field_key] = self.formfield(prop, initial=','.join(instance.data.get(prop.slug, []) if instance.data else []))
+                self.fields[field_key] = self.formfield(prop,
+                                                        initial=','.join(instance.data.get(prop.slug, []) if instance.data else []),
+                                                        backend_data=backend_data)
 
-    def formfield(self, prop, field_class=None, **kwargs):
+    def formfield(self, prop, field_class=None, backend_data=None, **kwargs):
         if field_class is None:
             field_class = PROPERTY_FIELD_CLASSES.get(prop.data_type, DEFAULT_FORM_CLASS)
         defaults = {
@@ -81,7 +89,7 @@ class PropertyForm (forms.Form):
             choices = [(ch, ch) for ch in prop.choice_list]
             defaults['choices'] = choices
         elif prop.data_type == 'model':
-            defaults['queryset'] = prop.model_queryset
+            defaults['queryset'] = prop.model_queryset(backend_data=backend_data, **kwargs)
             if defaults.get('required', False):
                 defaults['empty_label'] = None
         elif prop.data_type == 'boolean':

@@ -147,12 +147,11 @@ class Property (models.Model):
     def choice_list(self):
         return [ch.strip() for ch in self.choices.split('\n') if ch.strip()]
 
-    @property
-    def model_queryset(self):
+    def model_queryset(self, **kwargs):
         ModelClass = import_class(self.model)
         # Lookup models can provide an @classmethod 'field_model_queryset' to have control over what queryset is used
         if hasattr(ModelClass, 'field_model_queryset'):
-            qs = getattr(ModelClass, 'field_model_queryset')()
+            qs = getattr(ModelClass, 'field_model_queryset')(**kwargs)
         else:
             qs = ModelClass.objects.all()
         return qs
@@ -171,6 +170,9 @@ class Session (models.Model):
 
     # User-defined data, stored as JSON in a text field.
     data = JSONField(null=True)
+
+    # Data used to identify, manipulate, etc. this Session, typically utilized by the backend
+    backend_data = JSONField(null=True)
 
     # Stash the request object when calling attachments.session()
     _request = None
@@ -255,7 +257,7 @@ class Session (models.Model):
                 is_bound = (self._request is not None and (self._request.method == 'POST' or self._request.GET.get('bind-form-data', False)))
                 if is_bound:
                     kwargs['data'] = PropertyForm.get_form_data_from_session_data(self.data)
-                property_form = PropertyForm(**kwargs)   
+                property_form = PropertyForm(backend_data=self.backend_data, **kwargs)   
                 if self.data:
                     property_key_prefix = 'upload-{}-'.format(upload.pk)
                     for key in self.data:
