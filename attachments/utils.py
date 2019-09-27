@@ -94,7 +94,7 @@ class JSONField (models.TextField):
         return super(JSONField, self).get_prep_value(value)
 
     def value_to_string(self, obj):
-        return self.get_prep_value(self._get_val_from_obj(obj))
+        return self.get_prep_value(self.value_from_object(obj))
 
 #    def deconstruct(self):
 #        name, _mod, args, kwargs = super(JSONField, self).deconstruct()
