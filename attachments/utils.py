@@ -6,11 +6,17 @@ from django.db import IntegrityError, models
 from django.http import HttpResponse
 from six.moves.urllib.parse import quote
 import six
-
 import importlib
 import json
 import uuid
 
+
+def sizeof_fmt(num, suffix='B'):
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "{:3.1f}{}{}".format(num, unit, suffix)
+        num /= 1024.0
+    return "{:.1f}{}{}".format(num, 'Yi', suffix)
 
 def get_context_key(context):
     if context:
@@ -54,7 +60,7 @@ def get_storage():
 
 def get_default_path(upload, obj):
     ct = ContentType.objects.get_for_model(obj)
-    return '%s/%s/%s/%s/%s' % (ct.app_label, ct.model, obj.pk, upload.session.context, upload.file_name)
+    return '{}/{}/{}/{}/{}'.format(ct.app_label, ct.model, obj.pk, upload.session.context, upload.file_name)
 
 
 def url_filename(filename):
@@ -95,11 +101,6 @@ class JSONField (models.TextField):
 
     def value_to_string(self, obj):
         return self.get_prep_value(self._get_val_from_obj(obj))
-
-#    def deconstruct(self):
-#        name, _mod, args, kwargs = super(JSONField, self).deconstruct()
-#        return name, 'attachments.utils.JSONField', args, kwargs
-
 
 def import_class(fq_name):
     module_name, class_name = fq_name.rsplit('.', 1)

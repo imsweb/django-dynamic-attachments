@@ -9,18 +9,18 @@
             progress: null,
             success: null
         }, options);
-        
+
         var refresh = function() {
-        	var data = {};
-        	if (settings.container && settings.container.hasClass('bind-form-on-refresh')) {
-        		data['bind-form-data'] = true;
-        		settings.container.removeClass('bind-form-on-refresh');
-        	}
+        	  var data = {};
+        	  if (settings.container && settings.container.hasClass('bind-form-on-refresh')) {
+        		    data['bind-form-data'] = true;
+        		    settings.container.removeClass('bind-form-on-refresh');
+        	  }
             return $.ajax({
                 url: settings.url,
                 data: data,
                 success: function(html) {
-                    $(settings.container).empty().append(html).trigger('table-changed');
+                    $(settings.container).empty().append(html);
                 }
             });
         };
@@ -67,13 +67,13 @@
             var signal = $.Deferred();
             var formData = new FormData();
             formData.append('attachment', file);
-	        //include properties data if it exists
+            //include properties data if it exists
             $(".properties >* :input").each( function() {
-            	if(this.type !== "checkbox"){
-            		formData.append($(this).attr('id').slice(3), $(this).val());
-            	}else{
-            		formData.append($(this).attr('id').slice(3), $(this).is(':checked') ? 'true' : 'false');
-            	}
+                if(this.type !== "checkbox"){
+                    formData.append($(this).attr('id').slice(3), $(this).val());
+                }else{
+                    formData.append($(this).attr('id').slice(3), $(this).is(':checked') ? 'true' : 'false');
+                }
             })
             var xhr = new XMLHttpRequest();
             if(settings.progress) {
@@ -134,47 +134,6 @@
         // Load the initial attachments container.
         refresh();
 
-        $('body').on('click', 'a.delete-upload', function() {
-            var row = $(this).closest('.upload-item');
-            $.ajax({
-                type: 'POST',
-                url: $(this).attr('href'),
-                success: function(data) {
-                    row.remove();
-                    $(settings.container).trigger('table-changed');
-                }
-            });
-            return false;
-        });
-
-        $('body').on('submit', '.update-attachment', function(e) {
-            var postData = $(this).serializeArray();
-            var formURL = $(this).attr('action');
-            var popover = $(this).closest('.popover');
-            var container = $(this).find('.attachment-properties-form');
-            $.ajax({
-                url: formURL,
-                type: 'POST',
-                data: postData,
-                success: function(data, textStatus, jqXHR) {
-                    if(data.ok) {
-                        popover.fadeOut(150);
-                    }
-                    else {
-                        if(data.form_html) {
-                            container.empty().html(data.form_html);
-                        }
-                        else {
-                            alert(data.error);
-                        }
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    alert('Error trying to update attachment properties.');
-                }
-            });
-            return false;
-        });
 
         return this.change(function(e) {
             if(typeof FormData === 'undefined') {
@@ -186,5 +145,49 @@
         });
     };
 
-
 }(jQuery));
+
+/*
+ * The following functions only need to be applied once.
+ * They will always be available if this (attachments.js) is loaded on a page.
+ */
+$('body').on('click', 'a.delete-upload', function() {
+    var row = $(this).closest('.upload-item');
+    $.ajax({
+        type: 'POST',
+        url: $(this).attr('href'),
+        success: function(data) {
+            row.remove();
+        }
+    });
+    return false;
+});
+
+$('body').on('submit', '.update-attachment', function(e) {
+    var postData = $(this).serializeArray();
+    var formURL = $(this).attr('action');
+    var popover = $(this).closest('.popover');
+    var container = $(this).find('.attachment-properties-form');
+    $.ajax({
+        url: formURL,
+        type: 'POST',
+        data: postData,
+        success: function(data, textStatus, jqXHR) {
+            if(data.ok) {
+                popover.fadeOut(150);
+            }
+            else {
+                if(data.form_html) {
+                    container.empty().html(data.form_html);
+                }
+                else {
+                    alert(data.error);
+                }
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            alert('Error trying to update attachment properties.');
+        }
+    });
+    return false;
+});
