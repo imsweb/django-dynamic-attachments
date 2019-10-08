@@ -5,13 +5,13 @@ from django.template import loader
 from django.utils.encoding import force_text
 from django.views.decorators.csrf import csrf_exempt
 
-from attachments.exceptions import VirusFoundException
-
 from .forms import PropertyForm
-from .models import Attachment, Session
-from .signals import file_download, file_uploaded
+from .models import Attachment, Session, Upload
+from .signals import file_download, file_uploaded, virus_detected
 from .utils import get_storage, url_filename, user_has_access
+from .exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
+from datetime import datetime
 from wsgiref.util import FileWrapper
 import logging
 import mimetypes
@@ -31,7 +31,6 @@ def attach(request, session_id):
         content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
         try:
             f = request.FILES['attachment']
-            file_uploaded.send(sender=f, request=request, session=session)
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
             temp_dir = getattr(settings, 'ATTACHMENT_TEMP_DIR', None)
             if temp_dir is not None and not os.path.exists(temp_dir):
@@ -40,33 +39,61 @@ def attach(request, session_id):
             with os.fdopen(fd, 'wb') as fp:
                 for chunk in f.chunks():
                     fp.write(chunk)
-            # After attached file is placed in a temporary file and ATTACHMENTS_CLAMD is active scan it for viruses:
-            if getattr(settings, 'ATTACHMENTS_CLAMD', False):
-                import pyclamd
-                cd = pyclamd.ClamdUnixSocket()
-                virus = cd.scan_file(path)
-                if virus is not None:
-                    # if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quaranine, otherwise delete
-                    if getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', False):
-                        quarantine_path = os.path.join(getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH'), os.path.basename(path))
-                        os.rename(path, quarantine_path)
-                    else:
-                        os.remove(path)
-                    raise VirusFoundException('**WARNING** virus %s found in the file %s, could not upload!' % (virus[path][1], f.name))
-            session.uploads.create(file_path=path, file_name=f.name, file_size=f.size)
+
+            upload = Upload(file_path=path, file_name=f.name, file_size=f.size, session=session)
+            # Validate the upload before we move further
+            # This will throw an error if the upload is invalid
+            session.validate_upload(upload)
+            upload.save()
+
+            # Update the data for this session (includes all form data for the attachments)
             for key, value in request.POST.items():
                 if session.data:
                     session.data.update({key: value})
                 else:
                     session.data = {key: value}
             session.save()
-            return JsonResponse({'ok': True, 'file_name': f.name, 'file_size': f.size}, content_type=content_type)
+
+            # Keeping the sender as 'f' for backwards compatibility
+            file_uploaded.send(sender=f, request=request, session=session)
+            return JsonResponse({'ok': True, 'file_name': upload.file_name, 'file_size': upload.file_size}, content_type=content_type)
+
+        # These errors have helpful messages, so we return them
+        except (InvalidExtensionException, InvalidFileTypeException, FileSizeException) as ex:
+            return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
         except VirusFoundException as ex:
-            logger.exception(str(ex))
+            user = getattr(request, 'user', "Unknown user")
+            filename = upload.file_name
+            time_of_upload = datetime.now()
+            #if ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quarantine, otherwise delete
+            attachments_quarantine_path = getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', None)
+            if attachments_quarantine_path:
+                quarantine_path = os.path.join(attachments_quarantine_path, os.path.basename(upload.file_path))
+                os.rename(upload.file_path, quarantine_path)
+                quarantine_msg = 'File has been quarantined here: {}'.format(quarantine_path)
+            else:
+                os.remove(upload.file_path)
+                quarantine_path = None
+                quarantine_msg = 'File has been removed from the system'
+
+            error_msg = force_text(ex)
+            log_message = "{} - Uploaded by {} at {}. {}.".format(error_msg,
+                                                                  user,
+                                                                  time_of_upload.strftime('%Y-%m-%d %H:%M:%S'), 
+                                                                  quarantine_msg)
+            logger.exception(log_message)
+
+            virus_detected.send(sender=upload, 
+                                user=user, 
+                                filename=filename, 
+                                exception=ex, 
+                                time_of_upload=time_of_upload, 
+                                quarantine_path=quarantine_path)
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
         except Exception as ex:
-            logger.exception('Error attaching file to session %s', session_id)
-            return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
+            logger.exception('Error attaching file to session {}'.format(session_id))
+            # Since this is a catch all we need to return a generic error (in case a more sensitive error occurred)
+            return JsonResponse({'ok': False, 'error': 'An error occurred attaching file to the session.'}, content_type=content_type)
     else:
         return render(request, session.template, {
             'session': session,
