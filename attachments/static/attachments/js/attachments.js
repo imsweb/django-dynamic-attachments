@@ -20,7 +20,7 @@
                 url: settings.url,
                 data: data,
                 success: function(html) {
-                    $(settings.container).empty().append(html);
+                    $(settings.container).empty().append(html).trigger('table-changed');
                 }
             });
         };
@@ -158,6 +158,7 @@ $('body').on('click', 'a.delete-upload', function() {
         url: $(this).attr('href'),
         success: function(data) {
             row.remove();
+            $(settings.container).trigger('table-changed');
         }
     });
     return false;
