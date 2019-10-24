@@ -40,6 +40,10 @@ def attach(request, session_id):
                 for chunk in f.chunks():
                     fp.write(chunk)
 
+            # Set the desired permissions based on Django's FILE_UPLOAD_PERMISSIONS setting
+            if settings.FILE_UPLOAD_PERMISSIONS:
+                os.chmod(path, settings.FILE_UPLOAD_PERMISSIONS)
+
             upload = Upload(file_path=path, file_name=f.name, file_size=f.size, session=session)
             # Validate the upload before we move further
             # This will throw an error if the upload is invalid
