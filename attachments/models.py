@@ -41,9 +41,6 @@ class AttachmentManager (models.Manager):
             ct = ContentType.objects.get_for_model(obj)
             path = '%s/%s/%s/%s/%s' % (ct.app_label, ct.model, obj.pk, context, f.name)
         new_path = storage.save(path, f)
-        # Set the desired permissions based on Django's FILE_UPLOAD_PERMISSIONS setting
-        if settings.FILE_UPLOAD_PERMISSIONS:
-            os.chmod(new_path, settings.FILE_UPLOAD_PERMISSIONS)
         return self.create(
             file_path=new_path,
             file_name=f.name,
@@ -217,9 +214,6 @@ class Session (models.Model):
             with open(upload.file_path, 'rb') as fp:
                 new_path = storage.save(path(upload, obj), File(fp))
                 att_data = data(upload) if data else upload.extract_data(self._request)
-                # Set the desired permissions based on Django's FILE_UPLOAD_PERMISSIONS setting
-                if settings.FILE_UPLOAD_PERMISSIONS:
-                    os.chmod(new_path, settings.FILE_UPLOAD_PERMISSIONS)
                 attached.append(Attachment.objects.create(
                     file_path=new_path,
                     file_name=upload.file_name,

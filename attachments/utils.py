@@ -54,7 +54,10 @@ def session(request, template='attachments/list.html', context='', user=None, co
 
 
 def get_storage():
-    cls, kwargs = getattr(settings, 'ATTACHMENT_STORAGE', (settings.DEFAULT_FILE_STORAGE, {}))
+    default_kwargs = {}
+    if settings.FILE_UPLOAD_PERMISSIONS:
+        default_kwargs = {'file_permissions_mode': settings.FILE_UPLOAD_PERMISSIONS}
+    cls, kwargs = getattr(settings, 'ATTACHMENT_STORAGE', (settings.DEFAULT_FILE_STORAGE, default_kwargs))
     return get_storage_class(cls)(**kwargs)
 
 
