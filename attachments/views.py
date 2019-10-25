@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.http import Http404, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import loader
@@ -31,6 +32,9 @@ def attach(request, session_id):
         content_type = 'text/plain' if request.POST.get('X-Requested-With', '') == 'IFrame' else 'application/json'
         try:
             f = request.FILES['attachment']
+            max_lengh = Upload._meta.get_field('file_name').max_length
+            if len(f.name) > max_lengh:
+                raise ValidationError('An error occurred attaching file to the session. The filename cannot exceed {} characters.'.format(max_lengh))
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
             temp_dir = getattr(settings, 'ATTACHMENT_TEMP_DIR', None)
             if temp_dir is not None and not os.path.exists(temp_dir):
@@ -94,6 +98,8 @@ def attach(request, session_id):
                                 time_of_upload=time_of_upload, 
                                 quarantine_path=quarantine_path)
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=content_type)
+        except ValidationError as ex:
+            return JsonResponse({'ok': False, 'error': force_text(ex.message)}, content_type=content_type)
         except Exception as ex:
             logger.exception('Error attaching file to session {}'.format(session_id))
             # Since this is a catch all we need to return a generic error (in case a more sensitive error occurred)
