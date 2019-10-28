@@ -17,6 +17,7 @@ from .exceptions import VirusFoundException, InvalidExtensionException, InvalidF
 import os
 import magic
 import mimetypes
+import ntpath
 
 
 FIELD_TYPE_CHOICES = (
@@ -34,16 +35,18 @@ FIELD_TYPE_CHOICES = (
 
 class AttachmentManager (models.Manager):
 
-    def attach_raw(self, f, obj, user=None, context='', storage=None, path=None, data=None):
+    def attach_raw(self, f, obj, user=None, context='', storage=None, path=None, data=None, filename=None):
+        if filename is None:
+            filename = ntpath.basename(f.name)
         if storage is None:
             storage = get_storage()
         if path is None:
             ct = ContentType.objects.get_for_model(obj)
-            path = '%s/%s/%s/%s/%s' % (ct.app_label, ct.model, obj.pk, context, f.name)
+            path = '%s/%s/%s/%s/%s' % (ct.app_label, ct.model, obj.pk, context, filename)
         new_path = storage.save(path, f)
         return self.create(
             file_path=new_path,
-            file_name=f.name,
+            file_name=filename,
             file_size=f.size,
             user=user,
             context=context,
