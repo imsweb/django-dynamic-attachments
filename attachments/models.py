@@ -148,12 +148,12 @@ class Property (models.Model):
     def choice_list(self):
         return [ch.strip() for ch in self.choices.split('\n') if ch.strip()]
 
-    @property
-    def model_queryset(self):
+    # @property
+    def model_queryset(self, **kwargs):
         ModelClass = import_class(self.model)
         # Lookup models can provide an @classmethod 'field_model_queryset' to have control over what queryset is used
         if hasattr(ModelClass, 'field_model_queryset'):
-            qs = getattr(ModelClass, 'field_model_queryset')()
+            qs = getattr(ModelClass, 'field_model_queryset')(**kwargs)
         else:
             qs = ModelClass.objects.all()
         return qs
@@ -251,8 +251,15 @@ class Session (models.Model):
         for upload in self.uploads.all():
             kwargs = {'instance': upload, 'editable_only': False, }
             is_bound = (self._request is not None and (self._request.method == 'POST' or self._request.GET.get('bind-form-data', False)))
-            if is_bound:
-                kwargs['data'] = PropertyForm.get_form_data_from_session_data(self.data)
+            # if is_bound:
+            #     kwargs['data'] = PropertyForm.get_form_data_from_session_data(self.data)
+            kwargs['data'] = PropertyForm.get_form_data_from_session_data(self.data)
+            # else:
+            #     kwargs['data'] = self.data
+            # kwargs['data'] = {
+            #     **(kwargs['data'] or {}),
+            #     'current_request_type': self.data['current_request_type']
+            # }
             property_form = PropertyForm(**kwargs)   
             if self.data:
                 property_key_prefix = 'upload-{}-'.format(upload.pk)
