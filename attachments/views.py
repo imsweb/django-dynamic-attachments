@@ -132,6 +132,8 @@ def download(request, attach_id, filename=None):
     storage = get_storage()
     content_type = mimetypes.guess_type(attachment.file_name, strict=False)[0]
     response = StreamingHttpResponse(FileWrapper(storage.open(attachment.file_path)), content_type=content_type)
+    if getattr(settings, 'USE_XSENDFILE', False):
+        response['X-Sendfile'] = attachment.file_path
     try:
         # Not all storage backends support getting filesize.
         response['Content-Length'] = storage.size(attachment.file_path)
