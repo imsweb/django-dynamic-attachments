@@ -251,15 +251,8 @@ class Session (models.Model):
         for upload in self.uploads.all():
             kwargs = {'instance': upload, 'editable_only': False, }
             is_bound = (self._request is not None and (self._request.method == 'POST' or self._request.GET.get('bind-form-data', False)))
-            # if is_bound:
-            #     kwargs['data'] = PropertyForm.get_form_data_from_session_data(self.data)
-            kwargs['data'] = PropertyForm.get_form_data_from_session_data(self.data)
-            # else:
-            #     kwargs['data'] = self.data
-            # kwargs['data'] = {
-            #     **(kwargs['data'] or {}),
-            #     'current_request_type': self.data['current_request_type']
-            # }
+            if is_bound:
+                kwargs['data'] = PropertyForm.get_form_data_from_session_data(self.data)
             property_form = PropertyForm(**kwargs)   
             if self.data:
                 property_key_prefix = 'upload-{}-'.format(upload.pk)
