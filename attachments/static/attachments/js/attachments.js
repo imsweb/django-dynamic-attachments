@@ -10,12 +10,25 @@
             success: null
         }, options);
 
+        $(settings.container).on('click', 'a.delete-upload', function() {
+            var row = $(this).closest('.upload-item');
+            $.ajax({
+                type: 'POST',
+                url: $(this).attr('href'),
+                success: function(data) {
+                    row.remove();
+                    $(settings.container).trigger('table-changed');
+                }
+            });
+            return false;
+        });
+
         var refresh = function() {
-        	  var data = {};
-        	  if (settings.container && settings.container.hasClass('bind-form-on-refresh')) {
-        		    data['bind-form-data'] = true;
-        		    settings.container.removeClass('bind-form-on-refresh');
-        	  }
+              var data = {};
+              if (settings.container && settings.container.hasClass('bind-form-on-refresh')) {
+                    data['bind-form-data'] = true;
+                    settings.container.removeClass('bind-form-on-refresh');
+              }
             return $.ajax({
                 url: settings.url,
                 data: data,
@@ -74,7 +87,7 @@
                 }else{
                     formData.append($(this).attr('id').slice(3), $(this).is(':checked') ? 'true' : 'false');
                 }
-            })
+            });
             var xhr = new XMLHttpRequest();
             if(settings.progress) {
                 xhr.upload.addEventListener('progress', function(evt) {
@@ -151,19 +164,6 @@
  * The following functions only need to be applied once.
  * They will always be available if this (attachments.js) is loaded on a page.
  */
-$('body').on('click', 'a.delete-upload', function() {
-    var row = $(this).closest('.upload-item');
-    $.ajax({
-        type: 'POST',
-        url: $(this).attr('href'),
-        success: function(data) {
-            row.remove();
-            $(settings.container).trigger('table-changed');
-        }
-    });
-    return false;
-});
-
 $('body').on('submit', '.update-attachment', function(e) {
     var postData = $(this).serializeArray();
     var formURL = $(this).attr('action');

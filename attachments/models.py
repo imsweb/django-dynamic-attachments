@@ -304,7 +304,13 @@ class Session (models.Model):
         if getattr(settings, 'ATTACHMENTS_CLAMD', False):
             # We should explore moving this import in the future
             import pyclamd
-            cd = pyclamd.ClamdUnixSocket()
+            clamd_network_settings = getattr(settings, 'ATTACHMENTS_CLAMD_NETWORK_SETTINGS', {})
+            # If network settings are provided we use them to establish a socket connection
+            if clamd_network_settings:
+                # ClamdNetworkSocket accepts 'host', 'port', and 'timeout' as keys in ATTACHMENTS_CLAMD_NETWORK_SETTINGS
+                cd = pyclamd.ClamdNetworkSocket(**clamd_network_settings)
+            else:
+                cd = pyclamd.ClamdUnixSocket()
             virus = cd.scan_file(upload.file_path)
             if virus is not None:
                 raise VirusFoundException('**WARNING** virus: "{}" found in the file: "{}", could not upload!'.format(virus[upload.file_path][1], upload.file_name))
