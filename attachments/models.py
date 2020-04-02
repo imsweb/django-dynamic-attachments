@@ -152,7 +152,10 @@ class Property (models.Model):
         ModelClass = import_class(self.model)
         # Lookup models can provide an @classmethod 'field_model_queryset' to have control over what queryset is used
         if hasattr(ModelClass, 'field_model_queryset'):
-            qs = getattr(ModelClass, 'field_model_queryset')(**kwargs)
+            try:
+                qs = getattr(ModelClass, 'field_model_queryset')(**kwargs)
+            except:
+                qs = getattr(ModelClass, 'field_model_queryset')
         else:
             qs = ModelClass.objects.all()
         return qs
