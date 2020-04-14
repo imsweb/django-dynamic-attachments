@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.http import Http404, JsonResponse, StreamingHttpResponse
+from django.http import Http404, JsonResponse, StreamingHttpResponse, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import loader
 from django.utils.encoding import force_text
@@ -131,11 +131,14 @@ def download(request, attach_id, filename=None):
     file_download.send(sender=attachment, request=request)
     storage = get_storage()
     content_type = mimetypes.guess_type(attachment.file_name, strict=False)[0]
-    response = StreamingHttpResponse(FileWrapper(storage.open(attachment.file_path)), content_type=content_type)
-    if getattr(settings, 'USE_XSENDFILE', False):
+    if getattr(settings, 'ATTACHMENTS_USE_XSENDFILE', False):
+        response = HttpResponse(FileWrapper(storage.open(attachment.file_path)), content_type=content_type)
         response['X-Sendfile'] = attachment.file_path
+    else:
+        response = StreamingHttpResponse(FileWrapper(storage.open(attachment.file_path)), content_type=content_type)
     try:
         # Not all storage backends support getting filesize.
+        
         response['Content-Length'] = storage.size(attachment.file_path)
     except NotImplementedError:
         pass
