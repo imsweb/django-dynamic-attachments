@@ -148,12 +148,14 @@ class Property (models.Model):
     def choice_list(self):
         return [ch.strip() for ch in self.choices.split('\n') if ch.strip()]
 
-    @property
-    def model_queryset(self):
+    def model_queryset(self, **kwargs):
         ModelClass = import_class(self.model)
         # Lookup models can provide an @classmethod 'field_model_queryset' to have control over what queryset is used
         if hasattr(ModelClass, 'field_model_queryset'):
-            qs = getattr(ModelClass, 'field_model_queryset')()
+            try:
+                qs = getattr(ModelClass, 'field_model_queryset')(**kwargs)
+            except:
+                qs = getattr(ModelClass, 'field_model_queryset')()
         else:
             qs = ModelClass.objects.all()
         return qs
