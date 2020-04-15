@@ -155,7 +155,7 @@ class Property (models.Model):
             try:
                 qs = getattr(ModelClass, 'field_model_queryset')(**kwargs)
             except:
-                qs = getattr(ModelClass, 'field_model_queryset')
+                qs = getattr(ModelClass, 'field_model_queryset')()
         else:
             qs = ModelClass.objects.all()
         return qs
