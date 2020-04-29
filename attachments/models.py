@@ -274,8 +274,8 @@ class Session (models.Model):
 
         # Checking if file extension is within allowed extension list
         if self.allowed_file_extensions:
-            allowed_exts = self.allowed_file_extensions.split()
-            allowed_exts = [x.lower() if x.startswith('.') else '.{}'.format(x.lower()) for x in allowed_exts]
+            allowed_exts = self.allowed_file_extensions.lower().split()
+            allowed_exts = [x if x.startswith('.') else '.{}'.format(x) for x in allowed_exts]
             filename, ext = os.path.splitext(upload.file_name)
             if ext.lower() not in allowed_exts:
                 raise InvalidExtensionException("{} - Error: Unsupported file format. Supported file formats are: {}".format(
