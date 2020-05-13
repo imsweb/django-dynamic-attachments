@@ -297,9 +297,6 @@ class Session (models.Model):
                     # is white-listed. If so, we can allow the file to be uploaded.
                     allowed_types = self.allowed_file_types.split('\n')
                     file_type = magic.from_file(upload.file_path, mime=False)
-                    print(ext)
-                    print(file_mime)
-                    print(file_type)
                     if file_type not in allowed_types:
                         raise InvalidFileTypeException("{} - Error: The extension for this file is valid, but the content is not. Please verify the file content has been updated and save it again before attempting upload.".format(
                             upload.file_name))
