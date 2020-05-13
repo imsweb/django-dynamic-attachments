@@ -278,6 +278,9 @@ class Session (models.Model):
         if self.allowed_file_extensions:
             allowed_exts = self.allowed_file_extensions.lower().split()
             allowed_exts = [x if x.startswith('.') else '.{}'.format(x) for x in allowed_exts]
+            # Allow sites to override the default mime types for certain file extensions
+            # xslx files for example can often have the incorrect mime type if created outside excel 
+            mime_types_overrides = getattr(settings, 'ATTACHMENTS_MIME_TYPE_OVERRIDES', {})
             filename, ext = os.path.splitext(upload.file_name)
             if ext.lower() not in allowed_exts:
                 raise InvalidExtensionException("{} - Error: Unsupported file format. Supported file formats are: {}".format(
@@ -287,11 +290,16 @@ class Session (models.Model):
             # This ensures that file types not allowed are rejected even if they are renamed.
             if upload.file_size != 0:
                 file_mime = magic.from_file(upload.file_path, mime=True)
-                if set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)):
+ 
+                if (set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)) and 
+                    file_mime not in mime_types_overrides.get(ext, [])):
                     # In case our check for extensions didn't pass we check if the file type (not mimetype)
                     # is white-listed. If so, we can allow the file to be uploaded.
                     allowed_types = self.allowed_file_types.split('\n')
                     file_type = magic.from_file(upload.file_path, mime=False)
+                    print(ext)
+                    print(file_mime)
+                    print(file_type)
                     if file_type not in allowed_types:
                         raise InvalidFileTypeException("{} - Error: The extension for this file is valid, but the content is not. Please verify the file content has been updated and save it again before attempting upload.".format(
                             upload.file_name))
