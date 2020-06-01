@@ -29,7 +29,7 @@ def session(request, template='attachments/list.html', context='', user=None, co
     from .models import Session
     try:
         key = get_context_key(context)
-        s = Session.objects.get(uuid=request.POST[key])
+        s = Session.objects.prefetch_related('uploads').get(uuid=request.POST[key])
         s._request = request
         return s
     except (KeyError, Session.DoesNotExist):
