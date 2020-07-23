@@ -5,6 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, models
 from django.http import HttpResponse
 from six.moves.urllib.parse import quote
+from django.apps import apps
 import six
 import importlib
 import json
@@ -69,15 +70,8 @@ def url_filename(filename):
 
 
 def user_has_access(request, attachment):
-    # Check to see if this attachments model instance has a can_download, otherwise fall back
-    # to checking request.user.is_authenticated by default.
-    obj = attachment.content_object
-    auth = request.user.is_authenticated
-    if hasattr(obj, 'can_download'):
-        auth = obj.can_download(request, attachment)
-        if isinstance(auth, HttpResponse):
-            return auth
-    return auth
+    # Proxy for backward compatibility
+    return apps.get_app_config('attachments').user_has_access(request, attachment)
 
 
 class JSONField (models.TextField):
