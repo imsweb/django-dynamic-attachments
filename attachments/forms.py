@@ -60,12 +60,12 @@ class PropertyForm (forms.Form):
             if is_upload:
                 field_key = 'upload-%d-%s' % (instance.pk, prop.slug)
                 initial_data = form_data.get(field_key, None) if form_data else None
-                self.fields[field_key] = self.formfield(prop, initial=initial_data)
+                self.fields[field_key] = self.formfield(prop, initial=initial_data, data=form_data, **kwargs)
             elif is_attachment:
                 field_key = 'attachment-%d-%s' % (instance.pk, prop.slug)
                 self.fields[field_key] = self.formfield(prop, initial=','.join(instance.data.get(prop.slug, []) if instance.data else []))
 
-    def formfield(self, prop, field_class=None, **kwargs):
+    def formfield(self, prop, field_class=None, data=None, **kwargs):
         if field_class is None:
             field_class = PROPERTY_FIELD_CLASSES.get(prop.data_type, DEFAULT_FORM_CLASS)
         defaults = {
@@ -81,7 +81,7 @@ class PropertyForm (forms.Form):
             choices = [(ch, ch) for ch in prop.choice_list]
             defaults['choices'] = choices
         elif prop.data_type == 'model':
-            defaults['queryset'] = prop.model_queryset
+            defaults['queryset'] = prop.model_queryset(data=data)
             if defaults.get('required', False):
                 defaults['empty_label'] = None
         elif prop.data_type == 'boolean':

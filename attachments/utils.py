@@ -5,6 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, models
 from django.http import HttpResponse
 from six.moves.urllib.parse import quote
+from django.apps import apps
 import six
 import importlib
 import json
@@ -29,7 +30,7 @@ def session(request, template='attachments/list.html', context='', user=None, co
     from .models import Session
     try:
         key = get_context_key(context)
-        s = Session.objects.get(uuid=request.POST[key])
+        s = Session.objects.prefetch_related('uploads').get(uuid=request.POST[key])
         s._request = request
         return s
     except (KeyError, Session.DoesNotExist):
@@ -69,15 +70,8 @@ def url_filename(filename):
 
 
 def user_has_access(request, attachment):
-    # Check to see if this attachments model instance has a can_download, otherwise fall back
-    # to checking request.user.is_authenticated by default.
-    obj = attachment.content_object
-    auth = request.user.is_authenticated
-    if hasattr(obj, 'can_download'):
-        auth = obj.can_download(request, attachment)
-        if isinstance(auth, HttpResponse):
-            return auth
-    return auth
+    # Proxy for backward compatibility
+    return apps.get_app_config('attachments').user_has_access(request, attachment)
 
 
 class JSONField (models.TextField):

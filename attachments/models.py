@@ -122,7 +122,7 @@ class Attachment (models.Model):
             Added for use in bootstrap's template tag render_value. Returns tuple of property label and value
         """
         if prop.data_type == 'model' and prop.slug in self.data:
-            return prop.label, prop.model_queryset.get(pk=self.data.get(prop.slug, [])[0])
+            return prop.label, prop.model_queryset().get(pk=self.data.get(prop.slug, [])[0])
         else:
             return prop.label, self.data.get(prop.slug, [])
 
@@ -148,12 +148,14 @@ class Property (models.Model):
     def choice_list(self):
         return [ch.strip() for ch in self.choices.split('\n') if ch.strip()]
 
-    @property
-    def model_queryset(self):
+    def model_queryset(self, **kwargs):
         ModelClass = import_class(self.model)
         # Lookup models can provide an @classmethod 'field_model_queryset' to have control over what queryset is used
         if hasattr(ModelClass, 'field_model_queryset'):
-            qs = getattr(ModelClass, 'field_model_queryset')()
+            try:
+                qs = getattr(ModelClass, 'field_model_queryset')(**kwargs)
+            except:
+                qs = getattr(ModelClass, 'field_model_queryset')()
         else:
             qs = ModelClass.objects.all()
         return qs
@@ -274,10 +276,13 @@ class Session (models.Model):
 
         # Checking if file extension is within allowed extension list
         if self.allowed_file_extensions:
-            allowed_exts = self.allowed_file_extensions.split()
+            allowed_exts = self.allowed_file_extensions.lower().split()
             allowed_exts = [x if x.startswith('.') else '.{}'.format(x) for x in allowed_exts]
+            # Allow sites to override the default mime types for certain file extensions
+            # xslx files for example can often have the incorrect mime type if created outside excel 
+            mime_types_overrides = getattr(settings, 'ATTACHMENTS_MIME_TYPE_OVERRIDES', {})
             filename, ext = os.path.splitext(upload.file_name)
-            if ext not in allowed_exts:
+            if ext.lower() not in allowed_exts:
                 raise InvalidExtensionException("{} - Error: Unsupported file format. Supported file formats are: {}".format(
                     upload.file_name, ', '.join(allowed_exts)))
 
@@ -285,7 +290,9 @@ class Session (models.Model):
             # This ensures that file types not allowed are rejected even if they are renamed.
             if upload.file_size != 0:
                 file_mime = magic.from_file(upload.file_path, mime=True)
-                if set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)):
+ 
+                if (set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)) and 
+                    file_mime not in mime_types_overrides.get(ext, [])):
                     # In case our check for extensions didn't pass we check if the file type (not mimetype)
                     # is white-listed. If so, we can allow the file to be uploaded.
                     allowed_types = self.allowed_file_types.split('\n')
