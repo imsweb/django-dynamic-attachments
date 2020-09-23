@@ -317,7 +317,7 @@ class Session (models.Model):
                 # ClamdNetworkSocket accepts 'host', 'port', and 'timeout' as keys in ATTACHMENTS_CLAMD_NETWORK_SETTINGS
                 cd = pyclamd.ClamdNetworkSocket(**clamd_network_settings)
             else:
-                cd = pyclamd.ClamdUnixSocket()
+                cd = pyclamd.ClamdUnixSocket(filename=getattr(settings, 'ATTACHMENTS_CLAMD_UNIX_SOCKET_LOCATION', None))
             virus = cd.scan_file(upload.file_path)
             if virus is not None:
                 raise VirusFoundException('**WARNING** virus: "{}" found in the file: "{}", could not upload!'.format(virus[upload.file_path][1], upload.file_name))
