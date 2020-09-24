@@ -4,6 +4,8 @@ from django.core.files.storage import get_storage_class
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, models
 from django.http import HttpResponse
+from os.path import exists
+from pyclamd import ClamdUnixSocket
 from six.moves.urllib.parse import quote
 from django.apps import apps
 import six
@@ -100,3 +102,12 @@ def import_class(fq_name):
     module_name, class_name = fq_name.rsplit('.', 1)
     mod = importlib.import_module(module_name)
     return getattr(mod, class_name)
+
+
+class Centos7ClamdUnixSocket(ClamdUnixSocket):
+    def __init__(self, filename=None, timeout=None):
+        centos_7_socket = '/var/run/clamd.scan/clamd.sock'
+        if not filename and exists(centos_7_socket):
+            filename = centos_7_socket
+        super().__init__(filename, timeout)
+
