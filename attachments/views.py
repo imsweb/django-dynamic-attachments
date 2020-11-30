@@ -38,7 +38,10 @@ def attach(request, session_id):
             # Copy the Django attachment (which may be a file or in memory) over to a temp file.
             temp_dir = getattr(settings, 'ATTACHMENT_TEMP_DIR', None)
             if temp_dir is not None and not os.path.exists(temp_dir):
-                os.makedirs(temp_dir)
+                if settings.FILE_UPLOAD_DIRECTORY_PERMISSIONS:
+                    os.makedirs(temp_dir, mode=settings.FILE_UPLOAD_DIRECTORY_PERMISSIONS)
+                else:
+                    os.makedirs(temp_dir)
             fd, path = tempfile.mkstemp(dir=temp_dir)
             with os.fdopen(fd, 'wb') as fp:
                 for chunk in f.chunks():
