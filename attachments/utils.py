@@ -6,9 +6,8 @@ from django.db import IntegrityError, models
 from django.http import HttpResponse
 from os.path import exists
 from pyclamd import ClamdUnixSocket
-from six.moves.urllib.parse import quote
+from urllib.parse import quote
 from django.apps import apps
-import six
 import importlib
 import json
 import uuid
@@ -81,7 +80,7 @@ class JSONField (models.TextField):
     def to_python(self, value):
         if value == '':
             return None
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             return json.loads(value)
         return value
 

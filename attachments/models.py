@@ -7,7 +7,6 @@ from django.core.files import File
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
-from six import python_2_unicode_compatible
 from django.utils.safestring import mark_safe
 
 from .signals import attachments_attached
@@ -55,7 +54,6 @@ class AttachmentManager (models.Manager):
         )
 
 
-@python_2_unicode_compatible
 class Attachment (models.Model):
     file_path = models.TextField(unique=True)
     file_name = models.CharField(max_length=200)
@@ -127,7 +125,6 @@ class Attachment (models.Model):
             return prop.label, self.data.get(prop.slug, [])
 
 
-@python_2_unicode_compatible
 class Property (models.Model):
     label = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, help_text='Must be alphanumeric, with no spaces.')
@@ -161,7 +158,6 @@ class Property (models.Model):
         return qs
 
 
-@python_2_unicode_compatible
 class Session (models.Model):
     uuid = models.CharField(max_length=32, unique=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions', null=True, blank=True, on_delete=models.SET_NULL)
@@ -323,7 +319,6 @@ class Session (models.Model):
                 raise VirusFoundException('**WARNING** virus: "{}" found in the file: "{}", could not upload!'.format(virus[upload.file_path][1], upload.file_name))
 
 
-@python_2_unicode_compatible
 class Upload (models.Model):
     session = models.ForeignKey(Session, related_name='uploads', on_delete=models.CASCADE)
     file_path = models.TextField(unique=True)
