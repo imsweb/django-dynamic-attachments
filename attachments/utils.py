@@ -121,9 +121,9 @@ def is_ajax(request):
 def ajax_only(view_func):
     """Ensures that view function is being called by ajax. Returns 404 if not."""
     @wraps(view_func)
-    def wrapped_view(*args, **kwargs):
-        if is_ajax(args[0]):
-            return view_func(*args, **kwargs)
+    def wrapped_view(request, *args, **kwargs):
+        if is_ajax(request):
+            return view_func(request, *args, **kwargs)
         raise Http404()
 
     return wrapped_view
