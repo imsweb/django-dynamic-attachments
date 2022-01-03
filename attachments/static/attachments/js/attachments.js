@@ -108,6 +108,7 @@
             };
 
             xhr.open('POST', settings.url, true);
+            xhr.setRequestHeader('X-REQUESTED-WITH', 'XMLHttpRequest');
             xhr.send(formData);
 
             return signal;
