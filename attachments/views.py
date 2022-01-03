@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .forms import PropertyForm
 from .models import Attachment, Session, Upload
 from .signals import file_download, file_uploaded, virus_detected
-from .utils import get_storage, url_filename, user_has_access
+from .utils import ajax_only, get_storage, url_filename, user_has_access
 from .exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 from datetime import datetime
@@ -22,8 +22,8 @@ import tempfile
 
 logger = logging.getLogger(__name__)
 
-
 @csrf_exempt
+@ajax_only
 def attach(request, session_id):
     session = get_object_or_404(Session, uuid=session_id)
     session._request = request
@@ -114,7 +114,11 @@ def attach(request, session_id):
 
 
 @csrf_exempt
+@ajax_only
 def delete_upload(request, session_id, upload_id):
+    if not request.user.has_perm('attachments.delete_upload'):
+        raise Http404()
+    
     session = get_object_or_404(Session, uuid=session_id)
     upload = get_object_or_404(session.uploads, pk=upload_id)
     file_name = upload.file_name
@@ -150,12 +154,12 @@ def download(request, attach_id, filename=None):
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     return response
 
-
+@ajax_only
 def update_attachment(request, attach_id):
     attachment = get_object_or_404(Attachment, pk=attach_id)
     if not user_has_access(request, attachment):
         raise Http404()
-    if request.is_ajax() and request.method == 'POST':
+    if request.method == 'POST':
         try:
             property_form = PropertyForm(request.POST, instance=attachment)
             if property_form.is_valid():
