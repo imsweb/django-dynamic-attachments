@@ -1,12 +1,15 @@
+from functools import wraps
+
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import get_storage_class
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, models
-from django.http import HttpResponse
-from six.moves.urllib.parse import quote
+from django.http import Http404, HttpResponse
+from os.path import exists
+from pyclamd import ClamdUnixSocket
+from urllib.parse import quote
 from django.apps import apps
-import six
 import importlib
 import json
 import uuid
@@ -68,7 +71,6 @@ def url_filename(filename):
     return quote(filename.encode('utf-8'), safe='/ ')
 
 
-
 def user_has_access(request, attachment):
     # Proxy for backward compatibility
     return apps.get_app_config('attachments').user_has_access(request, attachment)
@@ -79,11 +81,11 @@ class JSONField (models.TextField):
     def to_python(self, value):
         if value == '':
             return None
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             return json.loads(value)
         return value
 
-    def from_db_value(self, value, expression, connection, context):
+    def from_db_value(self, value, expression, connection):
         return None if value is None else self.to_python(value)
 
     def get_prep_value(self, value):
@@ -96,7 +98,32 @@ class JSONField (models.TextField):
     def value_to_string(self, obj):
         return self.get_prep_value(self.value_from_object(obj))
 
+
 def import_class(fq_name):
     module_name, class_name = fq_name.rsplit('.', 1)
     mod = importlib.import_module(module_name)
     return getattr(mod, class_name)
+
+
+class Centos7ClamdUnixSocket(ClamdUnixSocket):
+    def __init__(self, filename=None, timeout=None):
+        centos_7_socket = '/var/run/clamd.scan/clamd.sock'
+        if not filename and exists(centos_7_socket):
+            filename = centos_7_socket
+        super().__init__(filename, timeout)
+
+
+def is_ajax(request):
+    """Util function for checking if request is made with ajax"""
+    return request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'
+
+
+def ajax_only(view_func):
+    """Ensures that view function is being called by ajax. Returns 404 if not."""
+    @wraps(view_func)
+    def wrapped_view(request, *args, **kwargs):
+        if is_ajax(request):
+            return view_func(request, *args, **kwargs)
+        raise Http404()
+
+    return wrapped_view

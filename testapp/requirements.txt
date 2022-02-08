@@ -1,5 +1,4 @@
 Django>=1.11
-six
 coverage==3.7.1
 python-magic>=0.4.15
 python-magic-bin>=0.4.14
