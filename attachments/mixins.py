@@ -76,7 +76,7 @@ class AttachmentsMixin:
         """
         :returns: ``True`` if the form or session has changed.
         """
-        return bool(self.deletions) or super().has_changed() or self.uploads_exist()
+        return super().has_changed() or bool(self.deletions) or self.uploads_exist()
 
     def save(self, commit=True):
         """
