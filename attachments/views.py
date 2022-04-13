@@ -140,7 +140,7 @@ def download(request, attach_id, filename=None):
     content_type = mimetypes.guess_type(attachment.file_name, strict=False)[0]
     if getattr(settings, 'ATTACHMENTS_USE_XSENDFILE', False):
         response = HttpResponse(content_type=content_type)
-        response['X-Sendfile'] = attachment.file_path
+        response['X-Sendfile'] = storage.path(attachment.file_path)
     else:
         response = StreamingHttpResponse(FileWrapper(storage.open(attachment.file_path)), content_type=content_type)
     try:
