@@ -130,6 +130,7 @@ var attachmentInputFiles = [];
         };
 
         $("#retry-btn").on("click", function(a) {
+            // This button must be provided on the site-side.
             uploadFiles(attachmentInputFiles);
             $(this).addClass("display-none");
         });

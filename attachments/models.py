@@ -31,6 +31,7 @@ FIELD_TYPE_CHOICES = (
     ('model', 'Model')
 )
 
+
 class AttachmentManager (models.Manager):
 
     def attach_raw(self, f, obj, user=None, context='', storage=None, path=None, data=None, filename=None):
