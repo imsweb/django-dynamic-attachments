@@ -1,5 +1,7 @@
 // TODO: check out https://github.com/moxiecode/moxie for IE polyfill
 
+var attachmentInputFiles = [];
+
 (function($) {
     $.fn.attachments = function(options) {
         var settings = $.extend({
@@ -54,6 +56,7 @@
             else {
                 if(settings.error) {
                     settings.error(data);
+                    $("#retry-btn").removeClass("display-none");
                 }
                 signal.reject(data);
             }
@@ -126,6 +129,12 @@
             }
         };
 
+        $("#retry-btn").on("click", function(a) {
+            uploadFiles(attachmentInputFiles);
+            $(this).addClass("display-none");
+        });
+
+
         if(settings.dropTarget) {
             $(settings.dropTarget).on({
                 dragover: function(e) {
@@ -154,6 +163,7 @@
                 iframeUpload(this);
             }
             else {
+                attachmentInputFiles.push.apply(attachmentInputFiles, this.files);
                 uploadFiles(this.files, this);
             }
         });

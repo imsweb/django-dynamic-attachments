@@ -42,19 +42,31 @@ def attach(request, session_id):
                     os.makedirs(temp_dir, mode=settings.FILE_UPLOAD_DIRECTORY_PERMISSIONS)
                 else:
                     os.makedirs(temp_dir)
-            fd, path = tempfile.mkstemp(dir=temp_dir)
-            with os.fdopen(fd, 'wb') as fp:
-                for chunk in f.chunks():
+
+            upload, created = Upload.objects.get_or_create(file_name=f.name, file_size=f.size, session=session, completed=False)
+            if created:
+                fd, path = tempfile.mkstemp(dir=temp_dir)
+                upload.file_path = path
+                upload.save()
+                opened_file = os.fdopen(fd, 'wb')
+            else:
+                opened_file = open(upload.file_path, 'ab')
+            with opened_file as fp:
+                for idx, chunk in enumerate(f.chunks()):
+                    if not created and idx < upload.chunk_index_to_resume_on:
+                        continue
                     fp.write(chunk)
+                    upload.chunk_index_to_resume_on = idx + 1
+                    upload.save()
 
             # Set the desired permissions based on Django's FILE_UPLOAD_PERMISSIONS setting
             if settings.FILE_UPLOAD_PERMISSIONS:
-                os.chmod(path, settings.FILE_UPLOAD_PERMISSIONS)
+                os.chmod(upload.file_path, settings.FILE_UPLOAD_PERMISSIONS)
 
-            upload = Upload(file_path=path, file_name=f.name, file_size=f.size, session=session)
             # Validate the upload before we move further
             # This will throw an error if the upload is invalid
             session.validate_upload(upload)
+            upload.completed = True
             upload.save()
 
             # Update the data for this session (includes all form data for the attachments)

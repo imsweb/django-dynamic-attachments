@@ -31,7 +31,6 @@ FIELD_TYPE_CHOICES = (
     ('model', 'Model')
 )
 
-
 class AttachmentManager (models.Manager):
 
     def attach_raw(self, f, obj, user=None, context='', storage=None, path=None, data=None, filename=None):
@@ -57,7 +56,7 @@ class AttachmentManager (models.Manager):
 class Attachment (models.Model):
     file_path = models.TextField(unique=True)
     file_name = models.CharField(max_length=200)
-    file_size = models.IntegerField()
+    file_size = models.BigIntegerField()
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachments', null=True, blank=True, on_delete=models.SET_NULL)
     context = models.CharField(max_length=200, blank=True, db_index=True)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
@@ -323,8 +322,10 @@ class Upload (models.Model):
     session = models.ForeignKey(Session, related_name='uploads', on_delete=models.CASCADE)
     file_path = models.TextField(unique=True)
     file_name = models.CharField(max_length=200)
-    file_size = models.IntegerField()
+    file_size = models.BigIntegerField()
     date_created = models.DateTimeField(default=timezone.now)
+    completed = models.BooleanField(default=False)
+    chunk_index_to_resume_on = models.IntegerField(default=0)
 
     def __str__(self):
         return self.file_name
