@@ -52,7 +52,7 @@ def attach(request, session_id):
                 open_args = (fd, 'wb')
             else:
                 open_function = open
-                open_args = (upload.filepath, 'ab')
+                open_args = (upload.file_path, 'ab')
             with open_function(*open_args) as fp:
                 attachment_chunk_save_point = getattr(settings, 'ATTACHMENT_CHUNK_SAVE_POINT', 20)
                 attachment_chunks = list(f.chunks())
