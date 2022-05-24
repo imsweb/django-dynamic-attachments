@@ -48,16 +48,21 @@ def attach(request, session_id):
                 fd, path = tempfile.mkstemp(dir=temp_dir)
                 upload.file_path = path
                 upload.save()
-                opened_file = os.fdopen(fd, 'wb')
-            else:
-                opened_file = open(upload.file_path, 'ab')
-            with opened_file as fp:
-                for idx, chunk in enumerate(f.chunks()):
+            with (os.fdopen(fd, 'wb') if created else open(upload.file_path, 'ab')) as fp:
+                attachment_chunk_save_point = getattr(settings, 'ATTACHMENT_CHUNK_SAVE_POINT', 20)
+                attachment_chunks = list(f.chunks())
+                last_idx = len(attachment_chunks) - 1
+                current_chunks = []
+                for idx, attachment_chunk in enumerate(attachment_chunks):
                     if not created and idx < upload.chunk_index_to_resume_on:
                         continue
-                    fp.write(chunk)
-                    upload.chunk_index_to_resume_on = idx + 1
-                    upload.save()
+                    current_chunks.append(attachment_chunk)
+                    if idx == last_idx or idx % attachment_chunk_save_point == 0:
+                        for chunk in current_chunks:
+                            fp.write(chunk)
+                        current_chunks = []
+                        upload.chunk_index_to_resume_on = idx + 1
+                        upload.save()
 
             # Set the desired permissions based on Django's FILE_UPLOAD_PERMISSIONS setting
             if settings.FILE_UPLOAD_PERMISSIONS:
