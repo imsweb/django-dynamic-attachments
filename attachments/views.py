@@ -48,7 +48,12 @@ def attach(request, session_id):
                 fd, path = tempfile.mkstemp(dir=temp_dir)
                 upload.file_path = path
                 upload.save()
-            with (os.fdopen(fd, 'wb') if created else open(upload.file_path, 'ab')) as fp:
+                open_function = os.fdopen
+                open_args = (fd, 'wb')
+            else:
+                open_function = open
+                open_args = (upload.filepath, 'ab')
+            with open_function(*open_args) as fp:
                 attachment_chunk_save_point = getattr(settings, 'ATTACHMENT_CHUNK_SAVE_POINT', 20)
                 attachment_chunks = list(f.chunks())
                 last_idx = len(attachment_chunks) - 1
