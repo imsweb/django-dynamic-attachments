@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -9,14 +7,15 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
-from .signals import attachments_attached
-from .utils import JSONField, get_context_key, get_default_path, get_storage, import_class, sizeof_fmt, Centos7ClamdUnixSocket
-from .exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
+from attachments.signals import attachments_attached
+from attachments.utils import JSONField, get_context_key, get_default_path, get_storage, import_class, sizeof_fmt, Centos7ClamdUnixSocket
+from attachments.exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 import os
 import magic
 import mimetypes
 import ntpath
+import tempfile
 
 
 FIELD_TYPE_CHOICES = (
@@ -286,7 +285,7 @@ class Session (models.Model):
             # This ensures that file types not allowed are rejected even if they are renamed.
             if upload.file_size != 0:
                 file_mime = magic.from_file(upload.file_path, mime=True)
- 
+
                 if (set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)) and 
                     file_mime not in mime_types_overrides.get(ext, [])):
                     # In case our check for extensions didn't pass we check if the file type (not mimetype)
@@ -346,3 +345,29 @@ class Upload (models.Model):
                 if key.startswith(prefix):
                     data[key[len(prefix):]] = request.POST.getlist(key)
         return data
+
+    def upload_file(self, f, created=False, temp_dir=None):
+        if created:
+            fd, path = tempfile.mkstemp(dir=temp_dir)
+            self.file_path = path
+            self.save()
+            open_function = os.fdopen
+            open_args = (fd, 'wb')
+        else:
+            open_function = open
+            open_args = (self.file_path, 'ab')
+        with open_function(*open_args) as fp:
+            attachment_chunk_save_point = getattr(settings, 'ATTACHMENT_CHUNK_SAVE_POINT', 20)
+            attachment_chunks = list(f.chunks())
+            last_idx = len(attachment_chunks) - 1
+            current_chunks = []
+            for idx, attachment_chunk in enumerate(attachment_chunks):
+                if not created and idx < self.chunk_index_to_resume_on:
+                    continue
+                current_chunks.append(attachment_chunk)
+                if idx == last_idx or idx % attachment_chunk_save_point == 0:
+                    for chunk in current_chunks:
+                        fp.write(chunk)
+                    current_chunks = []
+                    self.chunk_index_to_resume_on = idx + 1
+                    self.save()

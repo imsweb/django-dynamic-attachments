@@ -9,8 +9,13 @@ var attachmentInputFiles = [];
             container: null,
             dropTarget: null,
             progress: null,
-            success: null
+            success: null,
+            enableRetry: true,
+            retry: null,
+            attachmentsRetryButtonID: "#attachments-retry-btn"
         }, options);
+
+        $(settings.attachmentsRetryButtonID).addClass("display-none");
 
         $(settings.container).on('click', 'a.delete-upload', function() {
             var row = $(this).closest('.upload-item');
@@ -35,7 +40,14 @@ var attachmentInputFiles = [];
                 url: settings.url,
                 data: data,
                 success: function(html) {
+                    var attachmentsRetryButtonHTML = null;
+                    if (settings.enableRetry && $("#attachments-retry-btn").length) {
+                        var attachmentsRetryButtonHTML = $("#attachments-retry-btn")[0].outerHTML;
+                    }
                     $(settings.container).empty().append(html).trigger('table-changed');
+                    if (attachmentsRetryButtonHTML) {
+                        $(settings.container).append(attachmentsRetryButtonHTML);
+                    }
                 }
             });
         };
@@ -56,7 +68,14 @@ var attachmentInputFiles = [];
             else {
                 if(settings.error) {
                     settings.error(data);
-                    $("#retry-btn").removeClass("display-none");
+                    if (settings.enableRetry) {
+                        if (!$(settings.attachmentsRetryButtonID).length) {
+                            $(settings.container).append(
+                                '<button type="button" id="attachments-retry-btn">Retry</button>'
+                            );
+                        }
+                        $(settings.attachmentsRetryButtonID).removeClass("display-none");
+                    }
                 }
                 signal.reject(data);
             }
@@ -129,12 +148,15 @@ var attachmentInputFiles = [];
             }
         };
 
-        $("#retry-btn").on("click", function(a) {
-            // This button must be provided on the site-side.
-            uploadFiles(attachmentInputFiles);
-            $(this).addClass("display-none");
-        });
-
+        if (settings.enableRetry) {
+            $(document).on("click", settings.attachmentsRetryButtonID, function(e) {
+                uploadFiles(attachmentInputFiles);
+                $(this).addClass("display-none");
+                if (settings.retry) {
+                    settings.retry();
+                }
+            });
+        }
 
         if(settings.dropTarget) {
             $(settings.dropTarget).on({

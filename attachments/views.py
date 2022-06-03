@@ -6,18 +6,17 @@ from django.template import loader
 from django.utils.encoding import force_text
 from django.views.decorators.csrf import csrf_exempt
 
-from .forms import PropertyForm
-from .models import Attachment, Session, Upload
-from .signals import file_download, file_uploaded, virus_detected
-from .utils import ajax_only, get_storage, url_filename, user_has_access
-from .exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
+from attachments.forms import PropertyForm
+from attachments.models import Attachment, Session, Upload
+from attachments.signals import file_download, file_uploaded, virus_detected
+from attachments.utils import ajax_only, get_storage, url_filename, user_has_access
+from attachments.exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 from datetime import datetime
 from wsgiref.util import FileWrapper
 import logging
 import mimetypes
 import os
-import tempfile
 
 
 logger = logging.getLogger(__name__)
@@ -44,30 +43,7 @@ def attach(request, session_id):
                     os.makedirs(temp_dir)
 
             upload, created = Upload.objects.get_or_create(file_name=f.name, file_size=f.size, session=session, completed=False)
-            if created:
-                fd, path = tempfile.mkstemp(dir=temp_dir)
-                upload.file_path = path
-                upload.save()
-                open_function = os.fdopen
-                open_args = (fd, 'wb')
-            else:
-                open_function = open
-                open_args = (upload.file_path, 'ab')
-            with open_function(*open_args) as fp:
-                attachment_chunk_save_point = getattr(settings, 'ATTACHMENT_CHUNK_SAVE_POINT', 20)
-                attachment_chunks = list(f.chunks())
-                last_idx = len(attachment_chunks) - 1
-                current_chunks = []
-                for idx, attachment_chunk in enumerate(attachment_chunks):
-                    if not created and idx < upload.chunk_index_to_resume_on:
-                        continue
-                    current_chunks.append(attachment_chunk)
-                    if idx == last_idx or idx % attachment_chunk_save_point == 0:
-                        for chunk in current_chunks:
-                            fp.write(chunk)
-                        current_chunks = []
-                        upload.chunk_index_to_resume_on = idx + 1
-                        upload.save()
+            upload.upload_file(f=f, created=created, temp_dir=temp_dir)
 
             # Set the desired permissions based on Django's FILE_UPLOAD_PERMISSIONS setting
             if settings.FILE_UPLOAD_PERMISSIONS:
