@@ -41,8 +41,8 @@ var attachmentInputFiles = [];
                 data: data,
                 success: function(html) {
                     var attachmentsRetryButtonHTML = null;
-                    if (settings.enableRetry && $("#attachments-retry-btn").length) {
-                        var attachmentsRetryButtonHTML = $("#attachments-retry-btn")[0].outerHTML;
+                    if (settings.enableRetry && $(settings.attachmentsRetryButtonID).length) {
+                        attachmentsRetryButtonHTML = $(settings.attachmentsRetryButtonID)[0].outerHTML;
                     }
                     $(settings.container).empty().append(html).trigger('table-changed');
                     if (attachmentsRetryButtonHTML) {
@@ -71,7 +71,7 @@ var attachmentInputFiles = [];
                     if (settings.enableRetry) {
                         if (!$(settings.attachmentsRetryButtonID).length) {
                             $(settings.container).append(
-                                '<button type="button" id="attachments-retry-btn">Retry</button>'
+                                '<button type="button" id="' + settings.attachmentsRetryButtonID + '">Retry</button>'
                             );
                         }
                         $(settings.attachmentsRetryButtonID).removeClass("display-none");
