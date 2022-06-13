@@ -346,17 +346,13 @@ class Upload (models.Model):
                     data[key[len(prefix):]] = request.POST.getlist(key)
         return data
 
-    def upload_file(self, f, created=False, temp_dir=None):
+    def upload_file(self, f, file_path=None):
+        mode = 'ab'
         if created:
-            fd, path = tempfile.mkstemp(dir=temp_dir)
-            self.file_path = path
+            mode = 'wb'
+            self.file_path = file_path
             self.save()
-            open_function = os.fdopen
-            open_args = (fd, 'wb')
-        else:
-            open_function = open
-            open_args = (self.file_path, 'ab')
-        with open_function(*open_args) as fp:
+        with open(self.file_path, mode) as fp:
             attachment_chunk_save_point = getattr(settings, 'ATTACHMENT_CHUNK_SAVE_POINT', 20)
             attachment_chunks = list(f.chunks())
             last_idx = len(attachment_chunks) - 1

@@ -11,7 +11,7 @@ var attachmentInputFiles = [];
             progress: null,
             success: null,
             enableRetry: true,
-            retry: null,
+            retryCallback: function() {},
             attachmentsRetryButtonID: "#attachments-retry-btn"
         }, options);
 
@@ -74,7 +74,9 @@ var attachmentInputFiles = [];
                                 '<button type="button" id="' + settings.attachmentsRetryButtonID + '">Retry</button>'
                             );
                         }
-                        $(settings.attachmentsRetryButtonID).removeClass("display-none");
+                        if (settings.attachmentsRetryButtonID.length) {
+                            $(settings.attachmentsRetryButtonID).removeClass("display-none");
+                        }
                     }
                 }
                 signal.reject(data);
@@ -152,9 +154,7 @@ var attachmentInputFiles = [];
             $(document).on("click", settings.attachmentsRetryButtonID, function(e) {
                 uploadFiles(attachmentInputFiles);
                 $(this).addClass("display-none");
-                if (settings.retry) {
-                    settings.retry();
-                }
+                settings.retryCallback();
             });
         }
 
