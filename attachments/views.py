@@ -17,6 +17,7 @@ from wsgiref.util import FileWrapper
 import logging
 import mimetypes
 import os
+import tempfile
 
 
 logger = logging.getLogger(__name__)

@@ -15,7 +15,6 @@ import os
 import magic
 import mimetypes
 import ntpath
-import tempfile
 
 
 FIELD_TYPE_CHOICES = (
@@ -348,7 +347,7 @@ class Upload (models.Model):
 
     def upload_file(self, f, file_path=None):
         mode = 'ab'
-        if created:
+        if file_path:
             mode = 'wb'
             self.file_path = file_path
             self.save()
@@ -358,7 +357,7 @@ class Upload (models.Model):
             last_idx = len(attachment_chunks) - 1
             current_chunks = []
             for idx, attachment_chunk in enumerate(attachment_chunks):
-                if not created and idx < self.chunk_index_to_resume_on:
+                if not file_path and idx < self.chunk_index_to_resume_on:
                     continue
                 current_chunks.append(attachment_chunk)
                 if idx == last_idx or idx % attachment_chunk_save_point == 0:

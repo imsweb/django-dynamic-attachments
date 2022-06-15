@@ -12,10 +12,10 @@ var attachmentInputFiles = [];
             success: null,
             enableRetry: true,
             retryCallback: function() {},
-            attachmentsRetryButtonID: "#attachments-retry-btn"
+            attachmentsRetryButtonID: "attachments-retry-btn",
         }, options);
 
-        $(settings.attachmentsRetryButtonID).addClass("display-none");
+        $("#" + settings.attachmentsRetryButtonID).addClass("display-none");
 
         $(settings.container).on('click', 'a.delete-upload', function() {
             var row = $(this).closest('.upload-item');
@@ -40,14 +40,7 @@ var attachmentInputFiles = [];
                 url: settings.url,
                 data: data,
                 success: function(html) {
-                    var attachmentsRetryButtonHTML = null;
-                    if (settings.enableRetry && $(settings.attachmentsRetryButtonID).length) {
-                        attachmentsRetryButtonHTML = $(settings.attachmentsRetryButtonID)[0].outerHTML;
-                    }
-                    $(settings.container).empty().append(html).trigger('table-changed');
-                    if (attachmentsRetryButtonHTML) {
-                        $(settings.container).append(attachmentsRetryButtonHTML);
-                    }
+                    $(settings.container).empty().append(html).trigger("table-changed");
                 }
             });
         };
@@ -69,14 +62,12 @@ var attachmentInputFiles = [];
                 if(settings.error) {
                     settings.error(data);
                     if (settings.enableRetry) {
-                        if (!$(settings.attachmentsRetryButtonID).length) {
-                            $(settings.container).append(
+                        if (!$("#" + settings.attachmentsRetryButtonID).length) {
+                            $(settings.container).after(
                                 '<button type="button" id="' + settings.attachmentsRetryButtonID + '">Retry</button>'
                             );
                         }
-                        if (settings.attachmentsRetryButtonID.length) {
-                            $(settings.attachmentsRetryButtonID).removeClass("display-none");
-                        }
+                        $("#" + settings.attachmentsRetryButtonID).removeClass("display-none");
                     }
                 }
                 signal.reject(data);
@@ -151,7 +142,7 @@ var attachmentInputFiles = [];
         };
 
         if (settings.enableRetry) {
-            $(document).on("click", settings.attachmentsRetryButtonID, function(e) {
+            $(document).on("click", "#" + settings.attachmentsRetryButtonID, function() {
                 uploadFiles(attachmentInputFiles);
                 $(this).addClass("display-none");
                 settings.retryCallback();
