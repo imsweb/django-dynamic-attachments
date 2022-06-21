@@ -61,16 +61,20 @@ var attachmentInputFiles = [];
             else {
                 if(settings.error) {
                     settings.error(data);
-                    if (settings.enableRetry) {
-                        if (!$("#" + settings.attachmentsRetryButtonID).length) {
-                            $(settings.container).after(
-                                '<button type="button" id="' + settings.attachmentsRetryButtonID + '">Retry</button>'
-                            );
-                        }
-                        $("#" + settings.attachmentsRetryButtonID).removeClass("display-none");
-                    }
+                    displayRetryButton();
                 }
                 signal.reject(data);
+            }
+        };
+
+        var displayRetryButton = function() {
+            if (settings.enableRetry) {
+                if (!$("#" + settings.attachmentsRetryButtonID).length) {
+                    $(settings.container).after(
+                        '<button type="button" id="' + settings.attachmentsRetryButtonID + '">Retry</button>'
+                    );
+                }
+                $("#" + settings.attachmentsRetryButtonID).removeClass("display-none");
             }
         };
 
@@ -118,12 +122,21 @@ var attachmentInputFiles = [];
                 refresh();
 
                 // Fire the success/error handlers with the returned JSON
-                var data = JSON.parse(xhr.responseText);
+                var data = {};
+                try {
+                    data = JSON.parse(xhr.responseText);
+                } catch (e) {
+                    data["ok"] = false;
+                    data["error"] = "An error occurred attaching file to the session.";
+                }
                 handleResponse(data, signal);
             };
 
             xhr.open('POST', settings.url, true);
             xhr.setRequestHeader('X-REQUESTED-WITH', 'XMLHttpRequest');
+            xhr.onerror = function(e) {
+                displayRetryButton();
+            };
             xhr.send(formData);
 
             return signal;
