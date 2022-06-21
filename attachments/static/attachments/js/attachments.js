@@ -134,9 +134,7 @@ var attachmentInputFiles = [];
 
             xhr.open('POST', settings.url, true);
             xhr.setRequestHeader('X-REQUESTED-WITH', 'XMLHttpRequest');
-            xhr.onerror = function(e) {
-                displayRetryButton();
-            };
+            xhr.onerror = displayRetryButton;
             xhr.send(formData);
 
             return signal;
