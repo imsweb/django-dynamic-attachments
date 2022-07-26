@@ -3,6 +3,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 from django.db import models
+from django.db.utils import OperationalError
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -350,19 +351,19 @@ class Upload (models.Model):
         if file_path:
             mode = 'wb'
             self.file_path = file_path
-            self.save()
-        with open(self.file_path, mode) as fp:
-            attachment_chunk_save_point = getattr(settings, 'ATTACHMENT_CHUNK_SAVE_POINT', 20)
-            attachment_chunks = list(f.chunks())
-            last_idx = len(attachment_chunks) - 1
-            current_chunks = []
-            for idx, attachment_chunk in enumerate(attachment_chunks):
-                if not file_path and idx < self.chunk_index_to_resume_on:
-                    continue
-                current_chunks.append(attachment_chunk)
-                if idx == last_idx or idx % attachment_chunk_save_point == 0:
-                    for chunk in current_chunks:
-                        fp.write(chunk)
-                    current_chunks = []
-                    self.chunk_index_to_resume_on = idx + 1
-                    self.save()
+        current_chunk = None
+        current_idx = None
+        try:
+            with open(self.file_path, mode) as fp:
+                for idx, attachment_chunk in enumerate(f.chunks()):
+                    if not file_path and idx < self.chunk_index_to_resume_on:
+                        continue
+                    if current_chunk:
+                         fp.write(current_chunk)
+                    current_chunk = attachment_chunk
+                    current_idx = idx
+                fp.write(current_chunk)
+        except OperationalError:
+             self.chunk_index_to_resume_on = current_idx + 1
+        finally:
+             self.save()
