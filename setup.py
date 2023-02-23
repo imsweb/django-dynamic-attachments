@@ -17,6 +17,7 @@ setup(
         'pyclamd',
         'python-magic',
         'python-magic-bin;platform_system=="Windows"',
+        'ims-bootstrap ~= 4.2.0'
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
