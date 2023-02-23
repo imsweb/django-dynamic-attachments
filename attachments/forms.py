@@ -20,7 +20,6 @@ PROPERTY_WIDGET_CLASSES = {
     'model': forms.Select,
     'radio': forms.RadioSelect,
     'boolean': forms.CheckboxInput,
-    
 }
 
 DEFAULT_FORM_CLASS = forms.CharField
@@ -74,6 +73,7 @@ class PropertyForm (forms.Form):
             'required': prop.required,
             'widget': PROPERTY_WIDGET_CLASSES.get(prop.data_type, DEFAULT_WIDGET_CLASS),
         }
+
         if prop.data_type == 'date':
             # TODO: add a property for date display format?
             defaults['widget'] = defaults['widget'](format='%m/%d/%Y')
