@@ -74,7 +74,6 @@ class PropertyForm (forms.Form):
             'required': prop.required,
             'widget': PROPERTY_WIDGET_CLASSES.get(prop.data_type, DEFAULT_WIDGET_CLASS),
         }
-
         if prop.data_type == 'date':
             # TODO: add a property for date display format?
             defaults['widget'] = defaults['widget'](format='%m/%d/%Y')
@@ -87,7 +86,7 @@ class PropertyForm (forms.Form):
             if defaults.get('required', False):
                 defaults['empty_label'] = None
         elif prop.data_type == 'boolean':
-            kwargs['initial'] = kwargs.get('initial', False) in (True, 'true', 'on')   
+            kwargs['initial'] = kwargs.get('initial', False) in (True, 'true', 'on')
         defaults.update(kwargs)
         field = field_class(**defaults)
         return field
