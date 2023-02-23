@@ -20,6 +20,7 @@ PROPERTY_WIDGET_CLASSES = {
     'model': forms.Select,
     'radio': forms.RadioSelect,
     'boolean': forms.CheckboxInput,
+    
 }
 
 DEFAULT_FORM_CLASS = forms.CharField
@@ -82,10 +83,11 @@ class PropertyForm (forms.Form):
             defaults['choices'] = choices
         elif prop.data_type == 'model':
             defaults['queryset'] = prop.model_queryset(data=data)
+            defaults['widget'] = defaults['widget'](attrs={'class': "form-control"}) 
             if defaults.get('required', False):
                 defaults['empty_label'] = None
         elif prop.data_type == 'boolean':
-            kwargs['initial'] = kwargs.get('initial', False) in (True, 'true', 'on')
+            kwargs['initial'] = kwargs.get('initial', False) in (True, 'true', 'on')   
         defaults.update(kwargs)
         field = field_class(**defaults)
         return field
