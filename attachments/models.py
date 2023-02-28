@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -9,9 +7,9 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
-from .signals import attachments_attached
-from .utils import JSONField, get_context_key, get_default_path, get_storage, import_class, sizeof_fmt, Centos7ClamdUnixSocket
-from .exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
+from attachments.signals import attachments_attached
+from attachments.utils import JSONField, get_context_key, get_default_path, get_storage, import_class, sizeof_fmt, Centos7ClamdUnixSocket
+from attachments.exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 import os
 import magic
@@ -57,7 +55,7 @@ class AttachmentManager (models.Manager):
 class Attachment (models.Model):
     file_path = models.TextField(unique=True)
     file_name = models.CharField(max_length=200)
-    file_size = models.IntegerField()
+    file_size = models.BigIntegerField()
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachments', null=True, blank=True, on_delete=models.SET_NULL)
     context = models.CharField(max_length=200, blank=True, db_index=True)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
@@ -286,7 +284,7 @@ class Session (models.Model):
             # This ensures that file types not allowed are rejected even if they are renamed.
             if upload.file_size != 0:
                 file_mime = magic.from_file(upload.file_path, mime=True)
- 
+
                 if (set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)) and 
                     file_mime not in mime_types_overrides.get(ext, [])):
                     # In case our check for extensions didn't pass we check if the file type (not mimetype)
@@ -323,7 +321,7 @@ class Upload (models.Model):
     session = models.ForeignKey(Session, related_name='uploads', on_delete=models.CASCADE)
     file_path = models.TextField(unique=True)
     file_name = models.CharField(max_length=200)
-    file_size = models.IntegerField()
+    file_size = models.BigIntegerField()
     date_created = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
