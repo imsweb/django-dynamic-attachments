@@ -1,6 +1,6 @@
-from django.conf.urls import include, url
+from django.urls import include, re_path
 
 
 urlpatterns = [
-    url(r'attachments/', include('attachments.urls')),
+    re_path(r'attachments/', include('attachments.urls')),
 ]
