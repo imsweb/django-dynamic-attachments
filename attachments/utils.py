@@ -36,7 +36,7 @@ def get_context_key(context):
     return 'attachments'
 
 
-def session(request, template='attachments/list.html', context='', user=None, content_type=None,
+def session(request, template= get_template_path() + 'list.html', context='', user=None, content_type=None,
             allowed_file_extensions=None, allowed_file_types=None):
     from .models import Session
     try:
