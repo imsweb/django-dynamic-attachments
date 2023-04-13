@@ -7,13 +7,7 @@
             <th scope="col">Remove</th>
         </tr>
     </thead>
-    {% for error, upload, property_form in session.upload_forms %}
-        {% if error %}
-        <tbody>
-            <tr class="danger">
-                <td colspan="3">{{ error }}</td>
-            </tr>
-        {% else %}
+    {% for upload, property_form in session.upload_forms %}
         <tbody class="upload-item">
             <tr>
                 <td>{{ upload.file_name }}</td>
@@ -26,10 +20,9 @@
             </tr>
             {% if property_form %}
                 <tr class="properties">
-                    <td colspan="3">{% include "attachments/bootstrap/form.html" with form=property_form %}</td>
+                    <td colspan="3">{% include {%block form%}"attachments/bootstrap/form.html"{%endblock form%} with form=property_form %}</td>
                 </tr>
             {% endif %}
-        {% endif %}
         </tbody>
     {% endfor %}
 </table>

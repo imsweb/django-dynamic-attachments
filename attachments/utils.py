@@ -14,6 +14,14 @@ import importlib
 import json
 import uuid
 
+def get_template_path():
+    try:
+        print (apps.get_app_config('bootstrap'))
+    except:
+        print('no bootstrap')
+        return 'attachments/'
+    print(' yes bootstrap')
+    return 'attachments/bootstrap/'
 
 def sizeof_fmt(num, suffix='B'):
     for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:

@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .forms import PropertyForm
 from .models import Attachment, Session, Upload
 from .signals import file_download, file_uploaded, virus_detected
-from .utils import ajax_only, get_storage, url_filename, user_has_access
+from .utils import ajax_only, get_storage, url_filename, user_has_access, get_template_path
 from .exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 from datetime import datetime
@@ -23,16 +23,6 @@ import sys
 
 logger = logging.getLogger(__name__)
 
-
-
-def get_template_path():
-    try:
-        print (apps.get_app_config('bootstrap'))
-    except:
-        print('no bootstrap')
-        return 'attachments/'
-    print(' yes bootstrap')
-    return 'attachments/bootstrap/'
 
 @csrf_exempt
 @ajax_only
