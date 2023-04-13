@@ -1,5 +1,4 @@
-{% block load_bootstrap %}
-{% endblock load_bootstrap %}
+{% load bootstrap %}
 
 {% if session.uploads.exists %}
 <table class="table table-condensed attachment-files-table">
@@ -10,7 +9,13 @@
             <th scope="col">Remove</th>
         </tr>
     </thead>
-    {% for upload, property_form in session.upload_forms %}
+    {% for error, upload, property_form in session.upload_forms %}
+        {% if error %}
+        <tbody>
+            <tr class="danger">
+                <td colspan="3">{{ error }}</td>
+            </tr>
+        {% else %}
         <tbody class="upload-item">
             <tr>
                 <td>{{ upload.file_name }}</td>
@@ -26,6 +31,7 @@
                     <td colspan="3">{% include "attachments/form.html" with form=property_form %}</td>
                 </tr>
             {% endif %}
+        {% endif %}
         </tbody>
     {% endfor %}
 </table>
