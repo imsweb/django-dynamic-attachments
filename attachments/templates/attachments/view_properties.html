@@ -1,5 +1,6 @@
 {% load attachments %}
-{% load bootstrap %}
+{% block load_bootstrap %}
+{% endblock load_bootstrap %}
 
 <div class="popover">
     <div class="arrow"></div>
@@ -11,7 +12,9 @@
 			{% for prop in att.get_properties %}
 		     	<div class="row">
 		            <div class="col-md-12">
-		                {% render_value att prop %}
+		            	{% block render_prop %}
+		                	{{ prop }}
+		                {% endblock render_prop %}
 		            </div>
 		    	</div>
 			{% endfor %}
