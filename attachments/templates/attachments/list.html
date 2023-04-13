@@ -1,5 +1,3 @@
-{% load bootstrap %}
-
 {% if session.uploads.exists %}
 <table class="table table-condensed attachment-files-table">
     <thead>
@@ -28,7 +26,7 @@
             </tr>
             {% if property_form %}
                 <tr class="properties">
-                    <td colspan="3">{% include "attachments/form.html" with form=property_form %}</td>
+                    <td colspan="3">{% include "attachments/bootstrap/form.html" with form=property_form %}</td>
                 </tr>
             {% endif %}
         {% endif %}
