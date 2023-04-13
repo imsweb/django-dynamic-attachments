@@ -1,0 +1,9 @@
+{% extends 'attachments/view_properties.html' %}
+
+{% block load_bootstrap %}
+	{%load boostrap %}
+{% endblock load_bootstrap %}
+
+{% block render_prop %}
+	{{ render_value att prop }}
+{% endblock render_prop %}
