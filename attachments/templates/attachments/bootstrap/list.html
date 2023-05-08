@@ -1,3 +1,5 @@
 {% extends 'attachments/list.html' %}
-
+{% block load_bootstrap %}
+	{%load bootstrap %}
+{% endblock load_bootstrap %}
 {%block form%}"attachments/bootstrap/form.html"{%endblock form%}
