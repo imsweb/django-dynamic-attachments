@@ -1,6 +1,9 @@
 {% extends 'attachments/form.html' %}
 
+{% block load_bootstrap %}
+	{%load bootstrap %}
+{% endblock load_bootstrap %}
+
 {%block render%} 
-	{% load bootstrap %}
 	{% bootstrap_form form %}
 {% endblock render %}
