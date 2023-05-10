@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from attachments.signals import attachments_attached
-from attachments.utils import JSONField, get_context_key, get_default_path, get_storage, import_class, sizeof_fmt, Centos7ClamdUnixSocket, get_template_path
+from attachments.utils import JSONField, get_context_key, get_default_path, get_storage, import_class, sizeof_fmt, Centos7ClamdUnixSocket
 from attachments.exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 import os
@@ -159,7 +159,7 @@ class Property (models.Model):
 class Session (models.Model):
     uuid = models.CharField(max_length=32, unique=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='attachment_sessions', null=True, blank=True, on_delete=models.SET_NULL)
-    template = models.CharField(max_length=200, default= get_template_path() + 'list.html')
+    template = models.CharField(max_length=200, default='attachments/list.html')
     context = models.CharField(max_length=200, blank=True)
     content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.CASCADE)
     date_created = models.DateTimeField(default=timezone.now, editable=False)

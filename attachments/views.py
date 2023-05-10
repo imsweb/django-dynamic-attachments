@@ -18,11 +18,9 @@ import logging
 import mimetypes
 import os
 import tempfile
-from django.apps import apps
-import sys
 
 logger = logging.getLogger(__name__)
-
+template_path = get_template_path()
 
 @csrf_exempt
 @ajax_only
@@ -171,7 +169,7 @@ def update_attachment(request, attach_id):
             else:
                 return JsonResponse({
                     'ok': False,
-                    'form_html': loader.render_to_string(get_template_path() + 'form.html', {'form': property_form}),
+                    'form_html': loader.render_to_string(template_path + 'form.html', {'form': property_form}),
                 })
         except Exception as ex:
             logger.exception('Error updating attachment (pk=%s, file_name=%s)', attach_id, attachment.file_name)
@@ -183,7 +181,7 @@ def edit_attachment_properties(request, attach_id):
     attachment = get_object_or_404(Attachment, pk=attach_id)
     if not user_has_access(request, attachment):
         raise Http404()
-    return render(request, 'attachments\edit_properties.html', {
+    return render(request, 'attachments/edit_properties.html', {
         'att': attachment,
         'form': PropertyForm(instance=attachment),
     })
@@ -193,6 +191,6 @@ def view_attachment_properties(request, attach_id):
     attachment = get_object_or_404(Attachment, pk=attach_id)
     if not user_has_access(request, attachment):
         raise Http404()
-    return render(request, get_template_path() + 'view_properties.html', {
+    return render(request, template_path + 'view_properties.html', {
         'att': attachment,
     })
