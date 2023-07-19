@@ -1,0 +1,25 @@
+{
+  "name": "django-dynamic-attachments",
+  "version": "3.5.0",
+  "description": "Frontend for a Django application for handling file uploads and attaching them to arbitrary models.",
+  "files": [
+    "attachments/static/attachments/**"
+  ],
+  "main": "attachments/static/attachments/js/attachments.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imsweb/django-dynamic-attachments.git"
+  },
+  "author": "Dan Watson",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/imsweb/django-dynamic-attachments/issues"
+  },
+  "homepage": "https://github.com/imsweb/django-dynamic-attachments#readme"
+}
