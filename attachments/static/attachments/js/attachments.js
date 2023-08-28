@@ -102,7 +102,7 @@
             };
 
             return [xhr, signal];
-        }
+        };
         
         let send = function(xhr, file) {
             var formData = new FormData();
@@ -113,7 +113,7 @@
                 if(this.type !== "checkbox"){
                     var value = $(this).val();
                 } else{
-                    var value = $(this).is(':checked') ? 'true' : 'false'
+                    var value = $(this).is(':checked') ? 'true' : 'false';
                 }
                 formData.append(name, value);
             });
@@ -121,7 +121,7 @@
             xhr.open('POST', settings.url, true);
             xhr.setRequestHeader('X-REQUESTED-WITH', 'XMLHttpRequest');
             xhr.send(formData);
-        }
+        };
 
         let uploadFiles = function(files, input) {
             // start at 1 since we manually send the first file & JS is 0 based.
@@ -144,7 +144,7 @@
                     // send next file once prev finishes. Exclude last file sine nothing comes next.
                     signal.then(function() {
                         // 0 is the xhr request, 1 is the file to send
-                        send(xhrs[index][0], xhrs[index][1])
+                        send(xhrs[index][0], xhrs[index][1]);
                         index++;
                     });
                 } else {
