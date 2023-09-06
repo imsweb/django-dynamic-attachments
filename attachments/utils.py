@@ -64,7 +64,7 @@ def get_storage():
 
 def get_default_path(upload, obj):
     ct = ContentType.objects.get_for_model(obj)
-    return '{}/{}/{}/{}/{}'.format(ct.app_label, ct.model, obj.pk, upload.session.context, upload.file_name)
+    return f'{ct.app_label}/{ct.model}/{obj.pk,}/{upload.session.context}/{upload.file_name}'
 
 
 def url_filename(filename):

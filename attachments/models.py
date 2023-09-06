@@ -211,9 +211,11 @@ class Session (models.Model):
             path = get_default_path
         for upload in self.uploads.all():
             with open(upload.file_path, 'rb') as fp:
-                new_path = storage.save(path(upload, obj), File(fp))
+                _file = File(fp)
+                _file.temporary_file_path = upload.file_path
+                new_path = storage.save(path(upload, obj), _file)
                 att_data = data(upload) if data else upload.extract_data(self._request)
-                attached.append(Attachment.objects.create(
+                attached.append(Attachment(
                     file_path=new_path,
                     file_name=upload.file_name,
                     file_size=upload.file_size,
@@ -222,6 +224,8 @@ class Session (models.Model):
                     data=att_data,
                     content_object=obj
                 ))
+        if attached:
+            attached = Attachment.objects.bulk_create(attached)
         if send_signal:
             # Send a signal that attachments were attached. Pass what attachments were attached and to what object.
             attachments_attached.send(sender=self, obj=obj, attachments=attached)
