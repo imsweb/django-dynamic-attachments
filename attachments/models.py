@@ -211,9 +211,7 @@ class Session (models.Model):
             path = get_default_path
         for upload in self.uploads.all():
             with open(upload.file_path, 'rb') as fp:
-                _file = File(fp)
-                _file.temporary_file_path = upload.file_path
-                new_path = storage.save(path(upload, obj), _file)
+                new_path = storage.save(path(upload, obj), File(fp))
                 att_data = data(upload) if data else upload.extract_data(self._request)
                 attached.append(Attachment(
                     file_path=new_path,
