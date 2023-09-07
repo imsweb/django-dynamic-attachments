@@ -15,6 +15,7 @@ import os
 import magic
 import mimetypes
 import ntpath
+import warnings
 
 
 FIELD_TYPE_CHOICES = (
@@ -269,6 +270,11 @@ class Session (models.Model):
            4) The file is free of viruses
         These checks can be customized, including turning them on/off completely.
         '''
+        
+        warnings.warn(
+            '"validate_upload" is deprecated and will be removed in a future version.  This functionality is now built into the AttachView.',
+            DeprecationWarning,
+        )
 
         # Checking if file extension is within allowed extension list
         if self.allowed_file_extensions:
