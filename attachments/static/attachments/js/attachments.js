@@ -76,18 +76,7 @@
             return signal;
         };
 
-        var upload = function(file) {
-            var signal = $.Deferred();
-            var formData = new FormData();
-            formData.append('attachment', file);
-            //include properties data if it exists
-            $(".properties >* :input").each( function() {
-                if(this.type !== "checkbox"){
-                    formData.append($(this).attr('id').slice(3), $(this).val());
-                }else{
-                    formData.append($(this).attr('id').slice(3), $(this).is(':checked') ? 'true' : 'false');
-                }
-            });
+        let buildXHR = function() {
             var xhr = new XMLHttpRequest();
             if(settings.progress) {
                 xhr.upload.addEventListener('progress', function(evt) {
@@ -98,6 +87,11 @@
                 }, false);
             }
 
+            return xhr;
+        };
+        
+        let onload = function(xhr) {
+            var signal = $.Deferred();
             xhr.onload = function(evt) {
                 // Refresh the attachments listing
                 refresh();
@@ -107,22 +101,61 @@
                 handleResponse(data, signal);
             };
 
+            return [xhr, signal];
+        };
+        
+        let send = function(xhr, file) {
+            var formData = new FormData();
+            formData.append('attachment', file);
+            //include properties data if it exists
+            $(".properties >* :input").each( function() {
+                var name = $(this).attr('id').slice(3);
+                if(this.type !== "checkbox"){
+                    var value = $(this).val();
+                } else{
+                    var value = $(this).is(':checked') ? 'true' : 'false';
+                }
+                formData.append(name, value);
+            });
+
             xhr.open('POST', settings.url, true);
             xhr.setRequestHeader('X-REQUESTED-WITH', 'XMLHttpRequest');
             xhr.send(formData);
-
-            return signal;
         };
 
-        var uploadFiles = function(files, input) {
-            var chain = null;
-            // Call all the upload methods sequentially.
+        let uploadFiles = function(files, input) {
+            // start at 1 since we manually send the first file & JS is 0 based.
+            var index = 1;
+            var xhrs = {};
+            
             for(var i = 0; i < files.length; i++) {
-                chain = chain ? chain.then(upload(files[i])) : upload(files[i]);
-            }
-            // Clear the file input, if it was used to trigger the upload.
-            if(input) {
-                resetInput(input);
+                var file = files[i];
+                var [xhr, signal] = onload(buildXHR());
+
+                if (i==0) {
+                    // Send the first attachment
+                    send(xhr, file);
+                } else {
+                    // otherwise, store & send later
+                    xhrs[i] = [xhr, file];
+                }
+
+                if (i+1 != files.length) {
+                    // send next file once prev finishes. Exclude last file sine nothing comes next.
+                    signal.then(function() {
+                        // 0 is the xhr request, 1 is the file to send
+                        send(xhrs[index][0], xhrs[index][1]);
+                        index++;
+                    });
+                } else {
+                    signal.then(function() {
+                        // if the input was used to trigger the upload, then
+                        // clear it once the last file finishes uploading.
+                        if(input) {
+                            resetInput(input);
+                        }
+                    });
+                }
             }
         };
 
