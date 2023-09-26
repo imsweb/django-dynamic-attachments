@@ -220,7 +220,7 @@ class AttachView(ContextMixin, View):
         except (InvalidExtensionException, InvalidFileTypeException, FileSizeException) as ex:
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=self.content_type)
         except VirusFoundException as ex:
-            return handle_virus_found(request, upload)
+            return self.handle_virus_found(upload)
         except ValidationError as ex:
             return JsonResponse({'ok': False, 'error': force_text(ex.message)}, content_type=self.content_type)
         except Exception as ex:
