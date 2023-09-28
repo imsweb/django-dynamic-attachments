@@ -16,11 +16,12 @@ import uuid
 
 
 def sizeof_fmt(num, suffix='B'):
-    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
             return "{:3.1f}{}{}".format(num, unit, suffix)
         num /= 1024.0
     return "{:.1f}{}{}".format(num, 'Yi', suffix)
+
 
 def get_context_key(context):
     if context:
@@ -29,7 +30,7 @@ def get_context_key(context):
 
 
 def session(request, template='attachments/list.html', context='', user=None, content_type=None,
-            allowed_file_extensions=None, allowed_file_types=None):
+            allowed_file_extensions=None, allowed_file_types=None, unpack_zip_files=False):
     from .models import Session
     try:
         key = get_context_key(context)
@@ -49,7 +50,7 @@ def session(request, template='attachments/list.html', context='', user=None, co
             try:
                 s = Session.objects.create(user=user, uuid=uuid.uuid4().hex, template=template, context=context,
                                            content_type=content_type, allowed_file_extensions=allowed_file_extensions,
-                                           allowed_file_types=allowed_file_types)
+                                           allowed_file_types=allowed_file_types, unpack_zip_files=unpack_zip_files)
                 s._request = request
                 return s
             except IntegrityError:
