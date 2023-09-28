@@ -30,7 +30,7 @@ def get_context_key(context):
 
 
 def session(request, template='attachments/list.html', context='', user=None, content_type=None,
-            allowed_file_extensions=None, allowed_file_types=None, unpack_zip_files=False):
+            allowed_file_extensions=None, allowed_file_types=None, unpack_zip_files=None):
     from .models import Session
     try:
         key = get_context_key(context)
@@ -46,6 +46,8 @@ def session(request, template='attachments/list.html', context='', user=None, co
             allowed_file_extensions = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_EXTENSIONS', '')
         if allowed_file_types is None:
             allowed_file_types = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', '')
+        if unpack_zip_files is None:
+            unpack_zip_files = getattr(settings, 'ATTACHMENTS_UNPACK_ZIP_FILES', False)
         for _i in range(5):
             try:
                 s = Session.objects.create(user=user, uuid=uuid.uuid4().hex, template=template, context=context,
