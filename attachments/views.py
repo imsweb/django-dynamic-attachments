@@ -25,7 +25,6 @@ import mimetypes
 import os
 import tempfile
 
-
 logger = logging.getLogger(__name__)
 
 decorators = [ajax_only, csrf_exempt]
@@ -165,7 +164,7 @@ class AttachView(ContextMixin, View):
                 self.session.data = {key: value}
         self.session.save()
 
-    def handle_virus_found(self, upload):
+    def handle_virus_found(self, upload, ex):
         user = getattr(self.request, 'user', "Unknown user")
         filename = upload.file_name
         # If ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quarantine, otherwise delete
@@ -221,10 +220,10 @@ class AttachView(ContextMixin, View):
         except (InvalidExtensionException, InvalidFileTypeException, FileSizeException) as ex:
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=self.content_type)
         except VirusFoundException as ex:
-            return self.handle_virus_found(upload)
+            return self.handle_virus_found(upload, ex)
         except ValidationError as ex:
             return JsonResponse({'ok': False, 'error': force_text(ex.message)}, content_type=self.content_type)
-        except Exception as ex:
+        except Exception:
             logger.exception(f'Error attaching file to session {self.kwargs["session_id"]}')
             # Since this is a catch all we need to return a generic error (in case a more sensitive error occurred)
             return JsonResponse(
