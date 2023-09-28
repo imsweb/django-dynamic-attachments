@@ -2,6 +2,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.move import file_move_safe
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import loader
@@ -19,11 +20,16 @@ from .signals import file_download, file_uploaded, virus_detected
 from .utils import Centos7ClamdUnixSocket, ajax_only, get_storage, sizeof_fmt, url_filename, user_has_access
 
 from datetime import datetime
+from io import BytesIO
+from pathlib import Path
 from wsgiref.util import FileWrapper
+from zipfile import ZipFile
+import json
 import logging
 import mimetypes
 import os
 import tempfile
+
 
 logger = logging.getLogger(__name__)
 
@@ -194,7 +200,7 @@ class AttachView(ContextMixin, View):
 
         return JsonResponse({'ok': False, 'error': error_msg}, content_type=self.content_type)
 
-    def post(self, request, *args, **kwargs):
+    def handle_file_upload(self, request, *args, **kwargs):
         # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
         content_types = {'IFrame': 'text/plain'}
         self.content_type = content_types.get(request.POST.get('X-Requested-With'), 'application/json')
@@ -230,6 +236,35 @@ class AttachView(ContextMixin, View):
                 {'ok': False, 'error': 'An error occurred attaching file to the session.'},
                 content_type=self.content_type,
             )
+
+    @property
+    def file_is_zipped(self):
+        """Return True if self.file is a zip archive."""
+        return Path(self.file.name).suffix.lower() == ".zip"
+
+    def post(self, request, *args, **kwargs):
+        zip_error_msg = ""
+        files = [self.file]
+        if self.session.unpack_zip_files and self.file_is_zipped:
+            zip_error_msg = f"Error(s) in {self.file.name}:<br /><br />"
+            with ZipFile(self.file, "r") as zip_file:
+                files = [
+                    SimpleUploadedFile(name=name, content=BytesIO(zip_file.read(name)).getbuffer())
+                    for name in zip_file.namelist()
+                ]
+
+        errors = []
+        for self.file in files:
+            if self.session.unpack_zip_files and self.file_is_zipped:
+                errors.append(f"{self.file.name} - Error: nested zip files are not supported.")
+            else:
+                json_response = self.handle_file_upload(request, *args, **kwargs)
+                if error := json.loads(json_response.content).get("error", None):
+                    errors.append(error)
+        if errors:
+            err_msg = zip_error_msg + "<br />".join(errors)
+            return JsonResponse({"ok": False, "error": err_msg}, content_type=self.content_type)
+        return json_response
 
 
 @csrf_exempt
