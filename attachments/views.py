@@ -1,21 +1,22 @@
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.http import Http404, JsonResponse, StreamingHttpResponse, HttpResponse
+from django.core.files.move import file_move_safe
+from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import loader
-from django.utils.encoding import force_text
-from django.views.decorators.csrf import csrf_exempt
-from django.views import View
-from django.views.generic.base import ContextMixin
 from django.utils.decorators import method_decorator
-from django.core.files.move import file_move_safe
-from django.apps import apps
+from django.utils.encoding import force_text
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic.base import ContextMixin
+import magic
 
+from .exceptions import FileSizeException, InvalidExtensionException, InvalidFileTypeException, VirusFoundException
 from .forms import PropertyForm
 from .models import Attachment, Session, Upload
 from .signals import file_download, file_uploaded, virus_detected
 from .utils import ajax_only, get_storage, url_filename, user_has_access
-from .exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 from datetime import datetime
 from wsgiref.util import FileWrapper
@@ -23,7 +24,6 @@ import logging
 import mimetypes
 import os
 import tempfile
-import magic
 
 
 logger = logging.getLogger(__name__)
