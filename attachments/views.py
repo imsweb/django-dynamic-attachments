@@ -16,7 +16,7 @@ from .exceptions import FileSizeException, InvalidExtensionException, InvalidFil
 from .forms import PropertyForm
 from .models import Attachment, Session, Upload
 from .signals import file_download, file_uploaded, virus_detected
-from .utils import ajax_only, get_storage, url_filename, user_has_access
+from .utils import Centos7ClamdUnixSocket, ajax_only, get_storage, sizeof_fmt, url_filename, user_has_access
 
 from datetime import datetime
 from wsgiref.util import FileWrapper
@@ -29,6 +29,7 @@ import tempfile
 logger = logging.getLogger(__name__)
 
 decorators = [ajax_only, csrf_exempt]
+
 
 @method_decorator(decorators, name='dispatch')
 class AttachView(ContextMixin, View):
@@ -244,7 +245,7 @@ def attach(request, session_id):
 def delete_upload(request, session_id, upload_id):
     if not request.user.has_perm('attachments.delete_upload'):
         raise Http404()
-    
+
     session = get_object_or_404(Session, uuid=session_id)
     upload = get_object_or_404(session.uploads, pk=upload_id)
     file_name = upload.file_name
@@ -271,7 +272,7 @@ def download(request, attach_id, filename=None):
         response = StreamingHttpResponse(FileWrapper(storage.open(attachment.file_path)), content_type=content_type)
     try:
         # Not all storage backends support getting filesize.
-        
+
         response['Content-Length'] = storage.size(attachment.file_path)
     except NotImplementedError:
         pass
@@ -279,6 +280,7 @@ def download(request, attach_id, filename=None):
         filename = url_filename(filename or attachment.file_name)
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     return response
+
 
 @ajax_only
 def update_attachment(request, attach_id):
