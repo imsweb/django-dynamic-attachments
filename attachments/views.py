@@ -30,7 +30,6 @@ import mimetypes
 import os
 import tempfile
 
-
 logger = logging.getLogger(__name__)
 
 decorators = [ajax_only, csrf_exempt]
@@ -201,10 +200,6 @@ class AttachView(ContextMixin, View):
         return JsonResponse({'ok': False, 'error': error_msg}, content_type=self.content_type)
 
     def handle_file_upload(self, request, *args, **kwargs):
-        # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
-        content_types = {'IFrame': 'text/plain'}
-        self.content_type = content_types.get(request.POST.get('X-Requested-With'), 'application/json')
-
         try:
             path = self.create_tmp_file()
 
@@ -243,8 +238,12 @@ class AttachView(ContextMixin, View):
         return Path(self.file.name).suffix.lower() == ".zip"
 
     def post(self, request, *args, **kwargs):
+        # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
+        content_types = {'IFrame': 'text/plain'}
+        self.content_type = content_types.get(request.POST.get('X-Requested-With'), 'application/json')
         zip_error_msg = ""
         files = [self.file]
+        errors = []
         if self.session.unpack_zip_files and self.file_is_zipped:
             zip_error_msg = f"Error(s) in {self.file.name}:<br /><br />"
             with ZipFile(self.file, "r") as zip_file:
@@ -252,8 +251,8 @@ class AttachView(ContextMixin, View):
                     SimpleUploadedFile(name=name, content=BytesIO(zip_file.read(name)).getbuffer())
                     for name in zip_file.namelist()
                 ]
-
-        errors = []
+            if not files:
+                errors.append("Zip file is empty.")
         for self.file in files:
             if self.session.unpack_zip_files and self.file_is_zipped:
                 errors.append(f"{self.file.name} - Error: nested zip files are not supported.")
