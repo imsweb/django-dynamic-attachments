@@ -77,10 +77,6 @@ class AttachView(ContextMixin, View):
             file_path=path, file_name=self.file.name, file_size=self.file.size, session=self.session
         )
 
-        # Validate the upload before we move further
-        # This will throw an error if the upload is invalid
-        # self.session.validate_upload(upload)
-
     def validate_extension(self, path):
         """
         This function validates the given file by checking:
