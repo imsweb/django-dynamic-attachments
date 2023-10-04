@@ -241,29 +241,56 @@ class AttachView(ContextMixin, View):
         # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
         content_types = {'IFrame': 'text/plain'}
         self.content_type = content_types.get(request.POST.get('X-Requested-With'), 'application/json')
-        zip_error_msg = ""
-        files = [self.file]
-        errors = []
+        # we have a zip file, and we're unpacking it
         if self.session.unpack_zip_files and self.file_is_zipped:
-            zip_error_msg = f"Error(s) in {self.file.name}:<br /><br />"
-            with ZipFile(self.file, "r") as zip_file:
+            zipped_file = self.file
+            errors = []
+            success_dicts = []
+            with ZipFile(self.file, "r") as zf:
                 files = [
-                    SimpleUploadedFile(name=name, content=BytesIO(zip_file.read(name)).getbuffer())
-                    for name in zip_file.namelist()
+                    SimpleUploadedFile(name=name, content=BytesIO(zf.read(name)).getbuffer())
+                    for name in zf.namelist()
                 ]
+            # zip file is empty - return JsonResponse immediately
             if not files:
-                errors.append("Zip file is empty.")
-        for self.file in files:
-            if self.session.unpack_zip_files and self.file_is_zipped:
-                errors.append(f"{self.file.name} - Error: nested zip files are not supported.")
+                return JsonResponse(
+                    {"ok": False, "error": f"{zipped_file.name} is empty."},
+                    content_type=self.content_type,
+                )
+            for self.file in files:
+                # zip file contains another zip file - add an error
+                if self.file_is_zipped:
+                    errors.append(f"{self.file.name} - Error: nested zip files are not supported.")
+                else:
+                    json_content = json.loads(self.handle_file_upload(request, *args, **kwargs).content)
+                    # add an error if there is one
+                    if error := json_content.get("error", None):
+                        errors.append(error)
+                    # we only return success_dicts if all files are error-free, so skip if we already have errors
+                    elif not errors:
+                        success_dicts.append(json_content)
+            # some zip file contents returned errors
+            if errors:
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "error": f"Error(s) in {zipped_file.name}:<br /><br />{'<br />'.join(errors)}",
+                    },
+                    content_type=self.content_type,
+                )
+            # all zip file contents were error-free
             else:
-                json_response = self.handle_file_upload(request, *args, **kwargs)
-                if error := json.loads(json_response.content).get("error", None):
-                    errors.append(error)
-        if errors:
-            err_msg = zip_error_msg + "<br />".join(errors)
-            return JsonResponse({"ok": False, "error": err_msg}, content_type=self.content_type)
-        return json_response
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "file_name": zipped_file.name,
+                        "file_size": zipped_file.size,
+                        "files": success_dicts,
+                    },
+                    content_type=self.content_type,
+                )
+        # not a zip file, or zip files aren't being unpacked
+        return self.handle_file_upload(request, *args, **kwargs)
 
 
 @csrf_exempt
