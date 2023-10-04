@@ -1,34 +1,39 @@
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.http import Http404, JsonResponse, StreamingHttpResponse, HttpResponse
+from django.core.files.move import file_move_safe
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import loader
-from django.utils.encoding import force_text
-from django.views.decorators.csrf import csrf_exempt
-from django.views import View
-from django.views.generic.base import ContextMixin
 from django.utils.decorators import method_decorator
-from django.core.files.move import file_move_safe
-from django.apps import apps
+from django.utils.encoding import force_text
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic.base import ContextMixin
+import magic
 
+from .exceptions import FileSizeException, InvalidExtensionException, InvalidFileTypeException, VirusFoundException
 from .forms import PropertyForm
 from .models import Attachment, Session, Upload
 from .signals import file_download, file_uploaded, virus_detected
-from .utils import ajax_only, get_storage, url_filename, user_has_access
-from .exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
+from .utils import Centos7ClamdUnixSocket, ajax_only, get_storage, sizeof_fmt, url_filename, user_has_access
 
 from datetime import datetime
+from io import BytesIO
+from pathlib import Path
 from wsgiref.util import FileWrapper
+from zipfile import ZipFile
+import json
 import logging
 import mimetypes
 import os
 import tempfile
-import magic
-
 
 logger = logging.getLogger(__name__)
 
 decorators = [ajax_only, csrf_exempt]
+
 
 @method_decorator(decorators, name='dispatch')
 class AttachView(ContextMixin, View):
@@ -160,7 +165,7 @@ class AttachView(ContextMixin, View):
                 self.session.data = {key: value}
         self.session.save()
 
-    def handle_virus_found(self, upload):
+    def handle_virus_found(self, upload, ex):
         user = getattr(self.request, 'user', "Unknown user")
         filename = upload.file_name
         # If ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quarantine, otherwise delete
@@ -190,11 +195,7 @@ class AttachView(ContextMixin, View):
 
         return JsonResponse({'ok': False, 'error': error_msg}, content_type=self.content_type)
 
-    def post(self, request, *args, **kwargs):
-        # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
-        content_types = {'IFrame': 'text/plain'}
-        self.content_type = content_types.get(request.POST.get('X-Requested-With'), 'application/json')
-
+    def handle_file_upload(self, request, *args, **kwargs):
         try:
             path = self.create_tmp_file()
 
@@ -216,16 +217,76 @@ class AttachView(ContextMixin, View):
         except (InvalidExtensionException, InvalidFileTypeException, FileSizeException) as ex:
             return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=self.content_type)
         except VirusFoundException as ex:
-            return self.handle_virus_found(upload)
+            return self.handle_virus_found(upload, ex)
         except ValidationError as ex:
             return JsonResponse({'ok': False, 'error': force_text(ex.message)}, content_type=self.content_type)
-        except Exception as ex:
+        except Exception:
             logger.exception(f'Error attaching file to session {self.kwargs["session_id"]}')
             # Since this is a catch all we need to return a generic error (in case a more sensitive error occurred)
             return JsonResponse(
                 {'ok': False, 'error': 'An error occurred attaching file to the session.'},
                 content_type=self.content_type,
             )
+
+    @property
+    def file_is_zipped(self):
+        """Return True if self.file is a zip archive."""
+        return Path(self.file.name).suffix.lower() == ".zip"
+
+    def post(self, request, *args, **kwargs):
+        # Old versions of IE doing iframe uploads would present a Save dialog on JSON responses.
+        content_types = {'IFrame': 'text/plain'}
+        self.content_type = content_types.get(request.POST.get('X-Requested-With'), 'application/json')
+        # we have a zip file, and we're unpacking it
+        if self.session.unpack_zip_files and self.file_is_zipped:
+            zipped_file = self.file
+            errors = []
+            success_dicts = []
+            with ZipFile(self.file, "r") as zf:
+                files = [
+                    SimpleUploadedFile(name=name, content=BytesIO(zf.read(name)).getbuffer())
+                    for name in zf.namelist()
+                ]
+            # zip file is empty - return JsonResponse immediately
+            if not files:
+                return JsonResponse(
+                    {"ok": False, "error": f"{zipped_file.name} is empty."},
+                    content_type=self.content_type,
+                )
+            for self.file in files:
+                # zip file contains another zip file - add an error
+                if self.file_is_zipped:
+                    errors.append(f"{self.file.name} - Error: nested zip files are not supported.")
+                else:
+                    json_content = json.loads(self.handle_file_upload(request, *args, **kwargs).content)
+                    # add an error if there is one
+                    if error := json_content.get("error", None):
+                        errors.append(error)
+                    # we only return success_dicts if all files are error-free, so skip if we already have errors
+                    elif not errors:
+                        success_dicts.append(json_content)
+            # some zip file contents returned errors
+            if errors:
+                return JsonResponse(
+                    {
+                        "ok": False,
+                        "error": f"Error(s) in {zipped_file.name}:<br /><br />{'<br />'.join(errors)}",
+                    },
+                    content_type=self.content_type,
+                )
+            # all zip file contents were error-free
+            else:
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "file_name": zipped_file.name,
+                        "file_size": zipped_file.size,
+                        "files": success_dicts,
+                    },
+                    content_type=self.content_type,
+                )
+        # not a zip file, or zip files aren't being unpacked
+        return self.handle_file_upload(request, *args, **kwargs)
 
 
 @csrf_exempt
@@ -240,7 +301,7 @@ def attach(request, session_id):
 def delete_upload(request, session_id, upload_id):
     if not request.user.has_perm('attachments.delete_upload'):
         raise Http404()
-    
+
     session = get_object_or_404(Session, uuid=session_id)
     upload = get_object_or_404(session.uploads, pk=upload_id)
     file_name = upload.file_name
@@ -267,7 +328,7 @@ def download(request, attach_id, filename=None):
         response = StreamingHttpResponse(FileWrapper(storage.open(attachment.file_path)), content_type=content_type)
     try:
         # Not all storage backends support getting filesize.
-        
+
         response['Content-Length'] = storage.size(attachment.file_path)
     except NotImplementedError:
         pass
@@ -275,6 +336,7 @@ def download(request, attach_id, filename=None):
         filename = url_filename(filename or attachment.file_name)
         response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     return response
+
 
 @ajax_only
 def update_attachment(request, attach_id):
