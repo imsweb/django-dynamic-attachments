@@ -244,8 +244,8 @@ class AttachView(ContextMixin, View):
             success_dicts = []
             with ZipFile(self.file, "r") as zf:
                 files = [
-                    SimpleUploadedFile(name=name, content=BytesIO(zf.read(name)).getbuffer())
-                    for name in zf.namelist()
+                    SimpleUploadedFile(name=fileinfo.filename, content=BytesIO(zf.read(fileinfo.filename)).getbuffer())
+                    for fileinfo in zf.infolist() if not fileinfo.is_dir()
                 ]
             # zip file is empty - return JsonResponse immediately
             if not files:
