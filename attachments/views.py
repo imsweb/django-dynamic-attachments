@@ -247,7 +247,6 @@ class AttachView(ContextMixin, View):
                     SimpleUploadedFile(name=fileinfo.filename, content=BytesIO(zf.read(fileinfo.filename)).getbuffer())
                     for fileinfo in zf.infolist() if not fileinfo.is_dir()
                 ]
-
             # zip file is empty - return JsonResponse immediately
             if not files:
                 return JsonResponse(
