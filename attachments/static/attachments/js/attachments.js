@@ -76,13 +76,13 @@
             return signal;
         };
 
-        let buildXHR = function() {
+        let buildXHR = function(file) {
             var xhr = new XMLHttpRequest();
             if(settings.progress) {
                 xhr.upload.addEventListener('progress', function(evt) {
                     if(evt.lengthComputable) {
                         var percentComplete = 100.0 * evt.loaded / evt.total;
-                        settings.progress(percentComplete);
+                        settings.progress(percentComplete, file);
                     }
                 }, false);
             }
@@ -130,7 +130,7 @@
             
             for(var i = 0; i < files.length; i++) {
                 var file = files[i];
-                var [xhr, signal] = onload(buildXHR());
+                var [xhr, signal] = onload(buildXHR(file));
 
                 if (i==0) {
                     // Send the first attachment
