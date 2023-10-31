@@ -15,7 +15,7 @@ import os
 import magic
 import mimetypes
 import ntpath
-
+import warnings
 
 FIELD_TYPE_CHOICES = (
     ('string', 'Text'),
@@ -165,6 +165,7 @@ class Session (models.Model):
     date_created = models.DateTimeField(default=timezone.now, editable=False)
     allowed_file_extensions = models.TextField(help_text='Whitespace-separated file extensions that are allowed for upload.', blank=True)
     allowed_file_types = models.TextField(help_text='White list of file types that are allowed for upload, separated by new line. Used as a fallback if file mimetype is not known.', blank=True)
+    unpack_zip_files = models.BooleanField(default=False, help_text='If True, .zip file members will be attached, instead of the .zip file itself.')
 
     # User-defined data, stored as JSON in a text field.
     data = JSONField(null=True)
@@ -213,7 +214,7 @@ class Session (models.Model):
             with open(upload.file_path, 'rb') as fp:
                 new_path = storage.save(path(upload, obj), File(fp))
                 att_data = data(upload) if data else upload.extract_data(self._request)
-                attached.append(Attachment.objects.create(
+                attached.append(Attachment(
                     file_path=new_path,
                     file_name=upload.file_name,
                     file_size=upload.file_size,
@@ -222,6 +223,8 @@ class Session (models.Model):
                     data=att_data,
                     content_object=obj
                 ))
+        if attached:
+            attached = Attachment.objects.bulk_create(attached)
         if send_signal:
             # Send a signal that attachments were attached. Pass what attachments were attached and to what object.
             attachments_attached.send(sender=self, obj=obj, attachments=attached)
@@ -249,7 +252,7 @@ class Session (models.Model):
             is_bound = (self._request is not None and (self._request.method == 'POST' or self._request.GET.get('bind-form-data', False)))
             if is_bound:
                 kwargs['data'] = PropertyForm.get_form_data_from_session_data(self.data)
-            property_form = PropertyForm(**kwargs)   
+            property_form = PropertyForm(**kwargs)
             if self.data:
                 property_key_prefix = 'upload-{}-'.format(upload.pk)
                 for key in self.data:
@@ -268,12 +271,17 @@ class Session (models.Model):
         These checks can be customized, including turning them on/off completely.
         '''
 
+        warnings.warn(
+            '"validate_upload" is deprecated and will be removed in a future version.  This functionality is now built into the AttachView.',
+            DeprecationWarning,
+        )
+
         # Checking if file extension is within allowed extension list
         if self.allowed_file_extensions:
             allowed_exts = self.allowed_file_extensions.lower().split()
             allowed_exts = [x if x.startswith('.') else '.{}'.format(x) for x in allowed_exts]
             # Allow sites to override the default mime types for certain file extensions
-            # xslx files for example can often have the incorrect mime type if created outside excel 
+            # xslx files for example can often have the incorrect mime type if created outside excel
             mime_types_overrides = getattr(settings, 'ATTACHMENTS_MIME_TYPE_OVERRIDES', {})
             filename, ext = os.path.splitext(upload.file_name)
             if ext.lower() not in allowed_exts:
@@ -285,7 +293,7 @@ class Session (models.Model):
             if upload.file_size != 0:
                 file_mime = magic.from_file(upload.file_path, mime=True)
 
-                if (set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)) and 
+                if (set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)) and
                     file_mime not in mime_types_overrides.get(ext, [])):
                     # In case our check for extensions didn't pass we check if the file type (not mimetype)
                     # is white-listed. If so, we can allow the file to be uploaded.

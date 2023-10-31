@@ -14,3 +14,8 @@ class AttachmentsConfig(AppConfig):
             return obj.can_download(request, attachment)
 
         return request.user.is_authenticated
+
+    def get_attach_view(self):
+        from attachments.views import AttachView
+
+        return AttachView

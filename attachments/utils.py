@@ -16,11 +16,12 @@ import uuid
 
 
 def sizeof_fmt(num, suffix='B'):
-    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
             return "{:3.1f}{}{}".format(num, unit, suffix)
         num /= 1024.0
     return "{:.1f}{}{}".format(num, 'Yi', suffix)
+
 
 def get_context_key(context):
     if context:
@@ -29,7 +30,7 @@ def get_context_key(context):
 
 
 def session(request, template='attachments/list.html', context='', user=None, content_type=None,
-            allowed_file_extensions=None, allowed_file_types=None):
+            allowed_file_extensions=None, allowed_file_types=None, unpack_zip_files=None):
     from .models import Session
     try:
         key = get_context_key(context)
@@ -45,11 +46,13 @@ def session(request, template='attachments/list.html', context='', user=None, co
             allowed_file_extensions = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_EXTENSIONS', '')
         if allowed_file_types is None:
             allowed_file_types = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', '')
+        if unpack_zip_files is None:
+            unpack_zip_files = getattr(settings, 'ATTACHMENTS_UNPACK_ZIP_FILES', False)
         for _i in range(5):
             try:
                 s = Session.objects.create(user=user, uuid=uuid.uuid4().hex, template=template, context=context,
                                            content_type=content_type, allowed_file_extensions=allowed_file_extensions,
-                                           allowed_file_types=allowed_file_types)
+                                           allowed_file_types=allowed_file_types, unpack_zip_files=unpack_zip_files)
                 s._request = request
                 return s
             except IntegrityError:
@@ -64,7 +67,7 @@ def get_storage():
 
 def get_default_path(upload, obj):
     ct = ContentType.objects.get_for_model(obj)
-    return '{}/{}/{}/{}/{}'.format(ct.app_label, ct.model, obj.pk, upload.session.context, upload.file_name)
+    return f'{ct.app_label}/{ct.model}/{obj.pk}/{upload.session.context}/{upload.file_name}'
 
 
 def url_filename(filename):
