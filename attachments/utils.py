@@ -118,7 +118,7 @@ class Centos7ClamdUnixSocket(ClamdUnixSocket):
 
 def is_ajax(request):
     """Util function for checking if request is made with ajax"""
-    return request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'
+    return request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
 
 def ajax_only(view_func):

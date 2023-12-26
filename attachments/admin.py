@@ -5,6 +5,7 @@ from .models import Attachment, Property, Session, Upload
 from .utils import import_class
 
 
+@admin.register(Attachment)
 class AttachmentAdmin (admin.ModelAdmin):
     list_display = ('file_path', 'file_name', 'file_size', 'content_type', 'context', 'date_created')
     readonly_fields = ('data',)
@@ -22,6 +23,7 @@ class PropertyForm (forms.ModelForm):
         return self.cleaned_data['model']
 
 
+@admin.register(Property)
 class PropertyAdmin (admin.ModelAdmin):
     form = PropertyForm
     list_display = ('label', 'slug', 'data_type', 'choices', 'model', 'required')
@@ -34,11 +36,9 @@ class UploadInline (admin.TabularInline):
     extra = 0
 
 
+@admin.register(Session)
 class SessionAdmin (admin.ModelAdmin):
     list_display = ('uuid', 'user', 'template', 'context', 'date_created')
     inlines = (UploadInline,)
 
 
-admin.site.register(Attachment, AttachmentAdmin)
-admin.site.register(Session, SessionAdmin)
-admin.site.register(Property, PropertyAdmin)

@@ -7,7 +7,7 @@ from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpRespon
 from django.shortcuts import get_object_or_404, render
 from django.template import loader
 from django.utils.decorators import method_decorator
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import ContextMixin
@@ -179,7 +179,7 @@ class AttachView(ContextMixin, View):
             quarantine_path = None
             quarantine_msg = 'File has been removed from the system'
 
-        error_msg = force_text(ex)
+        error_msg = force_str(ex)
         time_of_upload = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         log_message = f"{error_msg} - Uploaded by {user} at {time_of_upload}. {quarantine_msg}."
         logger.exception(log_message)
@@ -215,11 +215,11 @@ class AttachView(ContextMixin, View):
 
         # These errors have helpful messages, so we return them
         except (InvalidExtensionException, InvalidFileTypeException, FileSizeException) as ex:
-            return JsonResponse({'ok': False, 'error': force_text(ex)}, content_type=self.content_type)
+            return JsonResponse({'ok': False, 'error': force_str(ex)}, content_type=self.content_type)
         except VirusFoundException as ex:
             return self.handle_virus_found(upload, ex)
         except ValidationError as ex:
-            return JsonResponse({'ok': False, 'error': force_text(ex.message)}, content_type=self.content_type)
+            return JsonResponse({'ok': False, 'error': force_str(ex.message)}, content_type=self.content_type)
         except Exception:
             logger.exception(f'Error attaching file to session {self.kwargs["session_id"]}')
             # Since this is a catch all we need to return a generic error (in case a more sensitive error occurred)
@@ -310,7 +310,7 @@ def delete_upload(request, session_id, upload_id):
         return JsonResponse({'ok': True})
     except Exception as ex:
         logger.exception('Error deleting upload (pk=%s, file_name=%s) from session %s', upload_id, file_name, session_id)
-        return JsonResponse({'ok': False, 'error': force_text(ex)})
+        return JsonResponse({'ok': False, 'error': force_str(ex)})
 
 
 def download(request, attach_id, filename=None):
@@ -357,7 +357,7 @@ def update_attachment(request, attach_id):
                 })
         except Exception as ex:
             logger.exception('Error updating attachment (pk=%s, file_name=%s)', attach_id, attachment.file_name)
-            return JsonResponse({'ok': False, 'error': force_text(ex)})
+            return JsonResponse({'ok': False, 'error': force_str(ex)})
     raise Http404()
 
 
