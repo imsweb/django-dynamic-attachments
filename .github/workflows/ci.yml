@@ -12,13 +12,19 @@ jobs:
       with:
         python-version: '3.x'
     - name: Install Checkers
-      run: pip install black isort flake8
+      run: pip install jake black isort flake8 djlint
+    - name: jake
+      run: jake ddt
     - name: black
       run: black --check .
     - name: isort
       run: isort --check .
     - name: flake8
       run: flake8
+    - name: djlint-formatting
+      run: djlint --check .
+    - name: djlint-linting
+      run: djlint --lint .
 
   test:
     runs-on: ubuntu-latest
