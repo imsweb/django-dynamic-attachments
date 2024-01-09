@@ -10,7 +10,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x'
+        python-version: 3.8
     - name: Install Checkers
       run: pip install jake black isort flake8 djlint
     - name: jake
@@ -32,8 +32,8 @@ jobs:
       postgres:
         image: postgres
         env:
-          POSTGRES_DB: history
-          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: django-dynamic-attachments
+          POSTGRES_PASSWORD: django-dynamic-attachments-secret
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -41,18 +41,14 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-    strategy:
-      matrix:
-        django-version: [3.2, 4.2]
-        python-version: [3.8]
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.8
     - name: Install requirements
-      run: pip install "Django>=3.2,<=4.2" pyclamd python-magic
+      run: pip install "Django>=3.2.23,<=4.2.9" coverage pyclamd python-magic
     - name: Run Tests (PostgreSQL)
       run: python manage.py test
     - name: Run Tests (SQLite)
