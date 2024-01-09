@@ -11,8 +11,6 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
-    - name: Install required packages
-      run: pip install pyclamd python-magic
     - name: Install Checkers
       run: pip install jake black isort flake8 djlint
     - name: jake
@@ -54,7 +52,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install requirements
-      run: pip install "Django~=${{ matrix.django-version }}.0" "psycopg2-binary<2.9"
+      run: pip install "Django>=3.2,<=4.2" pyclamd python-magic
     - name: Run Tests (PostgreSQL)
       run: python manage.py test
     - name: Run Tests (SQLite)
