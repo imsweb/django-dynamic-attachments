@@ -15,9 +15,6 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Upgrade pip setuptools wheel
-        run: pip install --upgrade pip setuptools wheel
-
       - name: Install Checkers
         run: pip install jake ruff djlint
 
@@ -55,9 +52,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
-
-      - name: Upgrade pip setuptools wheel
-        run: pip install --upgrade pip setuptools wheel
 
       - name: Install requirements
         run: pip install "Django>=3.2.23,<=4.2.9" "coverage==7.4.1" "ims-bootstrap<6"
