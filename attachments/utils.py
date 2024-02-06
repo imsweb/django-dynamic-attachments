@@ -31,7 +31,7 @@ def get_context_key(context):
 
 def session(request, template='attachments/list.html', context='', user=None, content_type=None,
             allowed_file_extensions=None, allowed_file_types=None, unpack_zip_files=None):
-    from .models import Session
+    from attachments.models import Session
     try:
         key = get_context_key(context)
         s = Session.objects.prefetch_related('uploads').get(uuid=request.POST[key])
