@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import get_storage_class
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, models
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from os.path import exists
 from pyclamd import ClamdUnixSocket
 from urllib.parse import quote

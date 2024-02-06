@@ -149,7 +149,7 @@ class Property (models.Model):
         if hasattr(ModelClass, 'field_model_queryset'):
             try:
                 qs = getattr(ModelClass, 'field_model_queryset')(**kwargs)
-            except:
+            except Exception as ex:
                 qs = getattr(ModelClass, 'field_model_queryset')()
         else:
             qs = ModelClass.objects.all()
