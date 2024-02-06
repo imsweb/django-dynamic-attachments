@@ -15,6 +15,9 @@ jobs:
         with:
           python-version: 3.11
 
+      - name: Upgrade pip setuptools wheel
+        run: pip install --upgrade pip setuptools wheel
+
       - name: Install Checkers
         run: pip install jake ruff djlint
 
@@ -47,16 +50,23 @@ jobs:
           - 5432:5432
     steps:
       - uses: actions/checkout@v2
+
       - name: Set up Python 3.11
         uses: actions/setup-python@v2
         with:
           python-version: 3.11
+
+      - name: Upgrade pip setuptools wheel:
+        run: pip install --upgrade pip setuptools wheel
+
       - name: Install requirements
         run: pip install "Django>=3.2.23,<=4.2.9" "coverage==3.7.1" "ims-bootstrap<6"
-          "pyclamd==0.4.0" "python-magic>=0.4.15" "python-magic-bin>=0.4.14"
+          "pyclamd==0.4.0" "python-magic>=0.4.15"
+
       - name: Run Tests (PostgreSQL)
         run: python manage.py test
         continue-on-error: true
+
       - name: Run Tests (SQLite)
         run: TEST_ENGINE=sqlite python manage.py test
         continue-on-error: true
