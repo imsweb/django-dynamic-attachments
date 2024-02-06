@@ -56,7 +56,7 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Upgrade pip setuptools wheel:
+      - name: Upgrade pip setuptools wheel
         run: pip install --upgrade pip setuptools wheel
 
       - name: Install requirements
