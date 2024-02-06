@@ -4,7 +4,7 @@ from django.test import RequestFactory, TestCase
 
 from attachments.utils import session, url_filename
 
-from attachments.models import Document
+from testapp.models import Document
 
 import io
 
