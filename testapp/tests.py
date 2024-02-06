@@ -32,7 +32,15 @@ class AttachmentTests (TestCase):
         sess = session(request)
         att = io.BytesIO(att_data)
         att.name = 'testfile'
-        response = self.client.post('/attachments/%s/' % sess.uuid, {'attachment': att})
+        response = self.client.post(
+            path='/attachments/%s/' % sess.uuid,
+            data={
+                'attachment': att,
+            },
+            headers={
+                'x-requested-with': 'XMLHttpRequest',
+            },
+        )
         self.assertEqual(response.json(), {
             'ok': True,
             'file_name': att.name,
