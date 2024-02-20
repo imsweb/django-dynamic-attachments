@@ -2,10 +2,9 @@
 
 from django.test import RequestFactory, TestCase
 
-from attachments.utils import session, url_filename
+from attachments.utils import get_storage, session, url_filename
 
 from testapp.models import Document
-from testapp.utils import get_storage
 
 import io
 
