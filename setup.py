@@ -19,7 +19,7 @@ setup(
         'python-magic-bin;platform_system=="Windows"',
     ],
     extras_require={
-        "bootstrap": ["bootstrap>=5.0", "RXP"],
+        "bootstrap": ["bootstrap>=5.0"],
     },
     classifiers=[
         'Development Status :: 3 - Alpha',
