@@ -28,7 +28,9 @@ import json
 import logging
 import mimetypes
 import os
+import re
 import tempfile
+
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +48,11 @@ class AttachView(ContextMixin, View):
                 f'An error occurred attaching file to the session. The filename cannot exceed {max_lengh} characters.'
             )
 
+    def sanitize_file_name(self):
+        sanitized_chars = r'[<>()\';&"%/\\`]'
+        sanitized_name = re.sub(sanitized_chars, '', self.file.name)
+        self.file.name = sanitized_name 
+    
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
         self.session = get_object_or_404(Session, uuid=kwargs['session_id'])
@@ -53,6 +60,7 @@ class AttachView(ContextMixin, View):
         self.file = request.FILES.get('attachment')
 
         if self.file:
+            self.sanitize_file_name()
             self.validate_max_length()
 
     def get(self, request, *args, **kwargs):
