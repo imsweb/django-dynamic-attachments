@@ -15,7 +15,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'pyclamd',
-        'python-magic',
+        'python-magic;platform_system!="Windows"',
         'python-magic-bin;platform_system=="Windows"',
     ],
     extras_require={

@@ -58,8 +58,10 @@ Quickstart Guide
 
 7. (OPTIONAL) If you have the clamav daemon running on your server set ``ATTACHMENTS_CLAMD`` to true in a settings file. NOTE: This currently only works for linux servers and the path to the clam socket will need to be set in /etc/clamav/clamd.conf or /etc/clamd.conf for this to work.
 
-8. (OPTIONAL) If ``ATTACHMENTS_CLAMD``is True then ``ATTACHMENTS_QUARANTINE_PATH`` can be set. Files found with a virus will be moved to that location. If this is not set the offending file will be deleted from the system.
+8. (OPTIONAL) If ``ATTACHMENTS_CLAMD`` is True then ``ATTACHMENTS_QUARANTINE_PATH`` can be set. Files found with a virus will be moved to that location. If this is not set the offending file will be deleted from the system.
 
 9. (OPTIONAL) If you would like to limit the the file types users are able to upload set ``ATTACHMENTS_ALLOWED_FILE_TYPES`` to a list or tuple of mimetypes in a settings file. IE: ALLOWED_FILE_TYPES = ['text/html'] (allowing only html files. You can also just set it to the the text after the first '/' as in [html]. Note that for some files like excel they have mimetypes like `application/vnd.ms-excel` so make sure that you check the mimetypes you want before setting them!
 
 10. (OPTIONAL) If you would like to set a maximum file size that users are able to upload set ``ATTACHMENTS_MAX_FILE_SIZE_BYTES`` to an int of the maximum bytes you would like to allow. Default: Maximum size of 50MB = 52428800 NOTES: This is BINARY bytes NOT decimal and 'None' is a valid value (any upload size will be accepted).
+
+11. (OPTIONAL) If you are allowing ``.zip`` files to be uploaded, and would like the contents of the ``.zip`` file to be attached instead of the ``.zip`` file itself, set ``ATTACHMENTS_UNPACK_ZIP_FILES`` to ``True`` in a settings file. You may also pass ``unpack_zip_files=True|False`` to an ``attachments.session()`` call to set the behavior for a specific view.
