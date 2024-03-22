@@ -13,26 +13,31 @@ PROPERTY_FIELD_CLASSES = {
     'model': forms.ModelChoiceField
 }
 
-PROPERTY_WIDGET_CLASSES = {
+
+
+DEFAULT_FORM_CLASS = forms.CharField
+
+try:
+    from bootstrap import widgets
+    PROPERTY_WIDGET_CLASSES = {
+        'text': widgets.Textarea,
+        'date': widgets.DateInput,
+        'choice': widgets.Select,
+        'model': widgets.Select,
+        'radio': widgets.RadioSelect,
+        'boolean': widgets.CheckboxInput,
+        }
+    DEFAULT_WIDGET_CLASS = widgets.TextInput
+except ImportError:
+    PROPERTY_WIDGET_CLASSES = {
     'text': forms.Textarea,
     'date': forms.DateInput,
     'choice': forms.Select,
     'model': forms.Select,
     'radio': forms.RadioSelect,
     'boolean': forms.CheckboxInput,
-}
-
-DEFAULT_FORM_CLASS = forms.CharField
-DEFAULT_WIDGET_CLASS = forms.TextInput
-
-try:
-    # XXX: get rid of this
-    from bootstrap import widgets
-    PROPERTY_WIDGET_CLASSES['text'] = widgets.Textarea
-    PROPERTY_WIDGET_CLASSES['date'] = widgets.DateInput
-    DEFAULT_WIDGET_CLASS = widgets.TextInput
-except ImportError:
-    pass
+    }
+    DEFAULT_WIDGET_CLASS = forms.TextInput
 
 
 class PropertyForm (forms.Form):

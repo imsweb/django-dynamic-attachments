@@ -14,13 +14,13 @@
 	                <td>{{ upload.file_size|filesizeformat }}</td>
 	                <td>
 	                    <a href="{% url 'delete-upload' session_id=session.uuid upload_id=upload.pk %}" class="delete-upload">
-	                        {% block delete-upload %}Remove <span class="sr-only">{{ upload.file_name }}</span>{% endblock delete-upload%}
+	                        {% block delete-upload %}Remove <span class="sr-only">{{ upload.file_name }}</span>{% endblock delete-upload %}
 	                    </a>
 	                </td>
 	            </tr>
 	            {% if property_form %}
 	                <tr class="properties">
-	                    <td colspan="3">{% include {%block form%}"attachments/form.html"{%endblock form%} with form=property_form %}</td>
+	                    <td colspan="3">{% include {% block form %}"attachments/form.html"{% endblock form %} with form=property_form %}</td>
 	                </tr>
 	            {% endif %}
 	        </tbody>
