@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import get_storage_class
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, models
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from os.path import exists
 from pyclamd import ClamdUnixSocket
 from urllib.parse import quote
@@ -31,7 +31,7 @@ def get_context_key(context):
 
 def session(request, template='attachments/list.html', context='', user=None, content_type=None,
             allowed_file_extensions=None, allowed_file_types=None, unpack_zip_files=None):
-    from .models import Session
+    from attachments.models import Session
     try:
         key = get_context_key(context)
         s = Session.objects.prefetch_related('uploads').get(uuid=request.POST[key])
