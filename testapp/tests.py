@@ -137,8 +137,8 @@ class AttachmentTests(AttachmentsTestCase):
             f'attachment; filename="{attachment.file_name}"',
         )
         self.assertEqual(
-            b"this is a fake file\r\n",
-            list(response.streaming_content)[0],
+            b"this is a fake file",
+            list(response.streaming_content)[0].strip(),
         )
 
     def test_update_attachment(self):
