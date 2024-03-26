@@ -85,11 +85,10 @@ class PropertyForm (forms.Form):
         elif prop.data_type == 'choice':
             choices = [(ch, ch) for ch in prop.choice_list]
             defaults['choices'] = choices
+            choices.insert(0, ('', '---------'))
         elif prop.data_type == 'model':
             defaults['queryset'] = prop.model_queryset(data=data)
             defaults['widget'] = defaults['widget'](attrs={'class': "form-control"}) 
-            if defaults.get('required', False):
-                defaults['empty_label'] = None
         elif prop.data_type == 'boolean':
             kwargs['initial'] = kwargs.get('initial', False) in (True, 'true', 'on')
         defaults.update(kwargs)
