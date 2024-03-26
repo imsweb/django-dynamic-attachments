@@ -85,7 +85,8 @@ class PropertyForm (forms.Form):
         elif prop.data_type == 'choice':
             choices = [(ch, ch) for ch in prop.choice_list]
             defaults['choices'] = choices
-            choices.insert(0, ('', '---------'))
+            if not prop.required:
+                choices.insert(0, ('', '---------'))
         elif prop.data_type == 'model':
             defaults['queryset'] = prop.model_queryset(data=data)
             defaults['widget'] = defaults['widget'](attrs={'class': "form-control"}) 
