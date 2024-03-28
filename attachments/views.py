@@ -17,7 +17,7 @@ from .exceptions import FileSizeException, InvalidExtensionException, InvalidFil
 from .forms import PropertyForm
 from .models import Attachment, Session, Upload
 from .signals import file_download, file_uploaded, virus_detected
-from .utils import Centos7ClamdUnixSocket, ajax_only, get_storage, sizeof_fmt, url_filename, user_has_access
+from .utils import Centos7ClamdUnixSocket, ajax_only, get_storage, sizeof_fmt, url_filename, user_has_access, get_template_path
 
 from datetime import datetime
 from io import BytesIO
@@ -31,8 +31,8 @@ import os
 import re
 import tempfile
 
-
 logger = logging.getLogger(__name__)
+template_path = get_template_path()
 
 decorators = [ajax_only, csrf_exempt]
 
@@ -361,7 +361,7 @@ def update_attachment(request, attach_id):
             else:
                 return JsonResponse({
                     'ok': False,
-                    'form_html': loader.render_to_string('attachments/form.html', {'form': property_form}),
+                    'form_html': loader.render_to_string(f'{template_path}form.html', {'form': property_form}),
                 })
         except Exception as ex:
             logger.exception('Error updating attachment (pk=%s, file_name=%s)', attach_id, attachment.file_name)
@@ -383,6 +383,6 @@ def view_attachment_properties(request, attach_id):
     attachment = get_object_or_404(Attachment, pk=attach_id)
     if not user_has_access(request, attachment):
         raise Http404()
-    return render(request, 'attachments/view_properties.html', {
+    return render(request,   f'{template_path}view_properties.html', {
         'att': attachment,
     })

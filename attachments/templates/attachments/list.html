@@ -1,31 +1,36 @@
-{% load bootstrap %}
-
 {% if session.uploads.exists %}
-<table class="table table-condensed attachment-files-table">
-    <thead>
-        <tr>
-            <th scope="col">File</th>
-            <th scope="col">Size</th>
-            <th scope="col">Remove</th>
-        </tr>
-    </thead>
-    {% for upload, property_form in session.upload_forms %}
-        <tbody class="upload-item">
+    <table class="table table-condensed attachment-files-table">
+        <thead>
             <tr>
-                <td>{{ upload.file_name }}</td>
-                <td>{{ upload.file_size|filesizeformat }}</td>
-                <td>
-                    <a href="{% url 'delete-upload' session_id=session.uuid upload_id=upload.pk %}" class="delete-upload">
-                        {% block delete-upload %}Remove <span class="sr-only">{{ upload.file_name }}</span>{% endblock %}
-                    </a>
-                </td>
+                <th scope="col">File</th>
+                <th scope="col">Size</th>
+                <th scope="col">Remove</th>
             </tr>
-            {% if property_form %}
-                <tr class="properties">
-                    <td colspan="3">{% include "attachments/form.html" with form=property_form %}</td>
+        </thead>
+        {% for upload, property_form in session.upload_forms %}
+            <tbody class="upload-item">
+                <tr>
+                    <td>{{ upload.file_name }}</td>
+                    <td>{{ upload.file_size|filesizeformat }}</td>
+                    <td>
+                        <a href="{% url 'delete-upload' session_id=session.uuid upload_id=upload.pk %}"
+                            class="delete-upload">
+                            {% block delete-upload %}
+                                Remove <span class="sr-only">{{ upload.file_name }}</span>
+                            {% endblock delete-upload %}
+                        </a>
+                    </td>
                 </tr>
-            {% endif %}
-        </tbody>
-    {% endfor %}
-</table>
+                {% if property_form %}
+                    <tr class="properties">
+                        <td colspan="3">
+                            {% block form %}
+                                {% include "attachments/form.html" with form=property_form %}
+                            {% endblock form %}
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        {% endfor %}
+    </table>
 {% endif %}

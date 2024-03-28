@@ -1,6 +1,8 @@
 import os
 
 
+DEBUG = True
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = 'attachment_tests_secret'

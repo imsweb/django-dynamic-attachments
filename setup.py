@@ -18,6 +18,9 @@ setup(
         'python-magic;platform_system!="Windows"',
         'python-magic-bin;platform_system=="Windows"',
     ],
+    extras_require={
+        "bootstrap": ["ims-bootstrap>=5.0,<6.0"],
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

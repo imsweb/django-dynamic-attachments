@@ -1,25 +1,27 @@
 {% load attachments %}
-{% load bootstrap %}
-
 <div class="popover">
-    <div class="arrow"></div>
-        <div class="popover-title">
-            <button type="button" class="close" aria-hidden="true" data-dismiss="popover"><span class="fa fa-times" aria-hidden="true"></span><span class="sr-only">Close</span></button>
-            <h3 class="attachment-properties-title">View {{ att.file_name }} Properties</h3>
-        </div>
-        <div class="popover-content attachment-properties-form">
-			{% for prop in att.get_properties %}
-		     	<div class="row">
-		            <div class="col-md-12">
-		                {% render_value att prop %}
-		            </div>
-		    	</div>
-			{% endfor %}
-        </div>
-        <div class="popover-footer">
-            <div class="popover-footer-btns">
-                <button type="button" class="btn btn-primary btn-sm" data-dismiss="popover">Close</button>
+    <div class="popover-arrow"></div>
+    <div class="popover-header">
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="popover"
+                aria-label="Close"></button>
+        <h3 class="attachment-properties-title">View {{ att.file_name }} Properties</h3>
+    </div>
+    <div class="popover-body attachment-properties-form">
+        {% for prop in att.get_properties %}
+            <div class="row">
+                <div class="col-md-12">
+                    {% block render_prop %}
+                        {{ prop }}
+                    {% endblock render_prop %}
+                </div>
             </div>
+        {% endfor %}
+    </div>
+    <div class="popover-footer">
+        <div class="popover-footer-btns">
+            <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="popover">Close</button>
         </div>
-    </form>
+    </div>
 </div>

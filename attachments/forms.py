@@ -13,26 +13,31 @@ PROPERTY_FIELD_CLASSES = {
     'model': forms.ModelChoiceField
 }
 
-PROPERTY_WIDGET_CLASSES = {
-    'text': forms.Textarea,
-    'date': forms.DateInput,
-    'choice': forms.Select,
-    'model': forms.Select,
-    'radio': forms.RadioSelect,
-    'boolean': forms.CheckboxInput,
-}
+
 
 DEFAULT_FORM_CLASS = forms.CharField
-DEFAULT_WIDGET_CLASS = forms.TextInput
 
 try:
-    # XXX: get rid of this
     from bootstrap import widgets
-    PROPERTY_WIDGET_CLASSES['text'] = widgets.Textarea
-    PROPERTY_WIDGET_CLASSES['date'] = widgets.DateInput
+    PROPERTY_WIDGET_CLASSES = {
+        'text': widgets.Textarea,
+        'date': widgets.DateInput,
+        'choice': widgets.Select,
+        'model': widgets.Select,
+        'radio': widgets.RadioSelect,
+        'boolean': widgets.CheckboxInput,
+        }
     DEFAULT_WIDGET_CLASS = widgets.TextInput
 except ImportError:
-    pass
+    PROPERTY_WIDGET_CLASSES = {
+        'text': forms.Textarea,
+        'date': forms.DateInput,
+        'choice': forms.Select,
+        'model': forms.Select,
+        'radio': forms.RadioSelect,
+        'boolean': forms.CheckboxInput,
+        }
+    DEFAULT_WIDGET_CLASS = forms.TextInput
 
 
 class PropertyForm (forms.Form):
@@ -80,10 +85,9 @@ class PropertyForm (forms.Form):
         elif prop.data_type == 'choice':
             choices = [(ch, ch) for ch in prop.choice_list]
             defaults['choices'] = choices
+            choices.insert(0, ('', '---------'))
         elif prop.data_type == 'model':
             defaults['queryset'] = prop.model_queryset(data=data)
-            if defaults.get('required', False):
-                defaults['empty_label'] = None
         elif prop.data_type == 'boolean':
             kwargs['initial'] = kwargs.get('initial', False) in (True, 'true', 'on')
         defaults.update(kwargs)
