@@ -30,13 +30,13 @@ try:
     DEFAULT_WIDGET_CLASS = widgets.TextInput
 except ImportError:
     PROPERTY_WIDGET_CLASSES = {
-    'text': forms.Textarea,
-    'date': forms.DateInput,
-    'choice': forms.Select,
-    'model': forms.Select,
-    'radio': forms.RadioSelect,
-    'boolean': forms.CheckboxInput,
-    }
+        'text': forms.Textarea,
+        'date': forms.DateInput,
+        'choice': forms.Select,
+        'model': forms.Select,
+        'radio': forms.RadioSelect,
+        'boolean': forms.CheckboxInput,
+        }
     DEFAULT_WIDGET_CLASS = forms.TextInput
 
 

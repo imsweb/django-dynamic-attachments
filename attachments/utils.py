@@ -14,12 +14,10 @@ import importlib
 import json
 import uuid
 
-def get_template_path():
-    try:
-        apps.get_app_config('bootstrap')
-    except:
-        return 'attachments/'
-    return 'attachments/bootstrap/'
+
+def get_template_path(filename=''):
+    prefix = 'attachments/bootstrap/' if apps.is_installed('bootstrap') else 'attachments/'
+    return f'{prefix}{filename}'
 
 def sizeof_fmt(num, suffix='B'):
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
@@ -35,7 +33,7 @@ def get_context_key(context):
     return 'attachments'
 
 
-def session(request, template= f'{get_template_path()}list.html', context='', user=None, content_type=None,
+def session(request, template=get_template_path(filename='list.html'), context='', user=None, content_type=None,
             allowed_file_extensions=None, allowed_file_types=None, unpack_zip_files=None):
     from .models import Session
     try:

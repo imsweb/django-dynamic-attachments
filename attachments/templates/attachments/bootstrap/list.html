@@ -1,2 +1,4 @@
 {% extends 'attachments/list.html' %}
-{% block form %}"attachments/bootstrap/form.html"{% endblock form %}
+{% block form %}
+    {% include "attachments/bootstrap/form.html" with form=property_form %}
+{% endblock form %}
