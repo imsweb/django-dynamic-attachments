@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.move import file_move_safe
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.models import Q
 from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.template import loader
@@ -307,11 +308,10 @@ def attach(request, session_id):
 @csrf_exempt
 @ajax_only
 def delete_upload(request, session_id, upload_id):
+    lookup_query = Q(session__uuid=session_id, pk=upload_id)
     if not request.user.has_perm('attachments.delete_upload'):
-        raise Http404()
-
-    session = get_object_or_404(Session, uuid=session_id)
-    upload = get_object_or_404(session.uploads, pk=upload_id)
+        lookup_query &= Q(session__user=request.user)
+    upload = get_object_or_404(Upload, lookup_query)
     file_name = upload.file_name
     try:
         upload.delete()
