@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "django-dynamic-attachments"
+dynamic = ["version"]
+description = "A Django application for handling file uploads and attaching them to arbitrary models."
+readme = "README.md"
+license = "BSD-2-Clause"
+authors = [
+    { name = "Dan Watson", email = "watsond@imsweb.com" },
+]
+maintainers = [
+  { name = "Brad Rutten", email = "ruttenb@imsweb.com" },
+  { name = "Jacob Tomlinson", email = "tomlinsonj@imsweb.com" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "pyclamd",
+    "python-magic-bin;platform_system==\"Windows\"",
+    "python-magic;platform_system!=\"Windows\"",
+]
+
+[project.optional-dependencies]
+bootstrap = [
+    "ims-bootstrap>=5.0,<6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/imsweb/django-dynamic-attachments"
+
+[tool.hatch.version]
+path = "attachments/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/attachments",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["attachments"]

@@ -1,2 +1,0 @@
-recursive-include attachments/static *
-recursive-include attachments/templates *
