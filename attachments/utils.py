@@ -2,10 +2,11 @@ from functools import wraps
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import storages
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, models
 from django.http import Http404, HttpResponse
+from django.utils.module_loading import import_string
 from os.path import exists
 from pyclamd import ClamdUnixSocket
 from urllib.parse import quote
@@ -65,9 +66,10 @@ def session(request, template=get_template_path(filename='list.html'), context='
 
 
 def get_storage():
-    cls, kwargs = getattr(settings, 'ATTACHMENT_STORAGE', (settings.DEFAULT_FILE_STORAGE, {}))
-    return get_storage_class(cls)(**kwargs)
-
+    cls_dict = storages.backends.get('attachment_storage', storages.backends["default"])
+    storage_class = import_string(cls_dict["BACKEND"])
+    storage_options = cls_dict.get("OPTIONS", {})
+    return storage_class(**storage_options)
 
 def get_default_path(upload, obj):
     ct = ContentType.objects.get_for_model(obj)
