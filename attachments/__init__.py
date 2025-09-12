@@ -1,4 +1,4 @@
-__version__ = "4.0.6"
+__version__ = "5.0.0"
 
 
 def session(*args, **kwargs):
