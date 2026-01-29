@@ -24,7 +24,6 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "pyclamd",
     "python-magic-bin;platform_system==\"Windows\"",
     "python-magic;platform_system!=\"Windows\"",
 ]

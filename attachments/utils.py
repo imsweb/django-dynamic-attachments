@@ -8,7 +8,6 @@ from django.db import IntegrityError, models
 from django.http import Http404, HttpResponse
 from django.utils.module_loading import import_string
 from os.path import exists
-from pyclamd import ClamdUnixSocket
 from urllib.parse import quote
 from django.apps import apps
 import importlib
@@ -112,14 +111,6 @@ def import_class(fq_name):
     module_name, class_name = fq_name.rsplit('.', 1)
     mod = importlib.import_module(module_name)
     return getattr(mod, class_name)
-
-
-class Centos7ClamdUnixSocket(ClamdUnixSocket):
-    def __init__(self, filename=None, timeout=None):
-        centos_7_socket = '/var/run/clamd.scan/clamd.sock'
-        if not filename and exists(centos_7_socket):
-            filename = centos_7_socket
-        super().__init__(filename, timeout)
 
 
 def is_ajax(request):

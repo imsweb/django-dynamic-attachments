@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from attachments.signals import attachments_attached
-from attachments.utils import JSONField, get_context_key, get_default_path, get_storage, import_class, sizeof_fmt, Centos7ClamdUnixSocket
+from attachments.utils import JSONField, get_context_key, get_default_path, get_storage, import_class, sizeof_fmt
 from attachments.exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 import os
@@ -309,21 +309,6 @@ class Session (models.Model):
         # max_file_size can be None (which means any size is allowed)
         if max_file_size and upload.file_size > max_file_size:
             raise FileSizeException("File is too large to be uploaded, file cannot be greater than {}".format(sizeof_fmt(max_file_size)))
-
-        if getattr(settings, 'ATTACHMENTS_CLAMD', False):
-            # We should explore moving this import in the future
-            import pyclamd
-            clamd_network_settings = getattr(settings, 'ATTACHMENTS_CLAMD_NETWORK_SETTINGS', {})
-            # If network settings are provided we use them to establish a socket connection
-            if clamd_network_settings:
-                # ClamdNetworkSocket accepts 'host', 'port', and 'timeout' as keys in ATTACHMENTS_CLAMD_NETWORK_SETTINGS
-                cd = pyclamd.ClamdNetworkSocket(**clamd_network_settings)
-            else:
-                cd = Centos7ClamdUnixSocket(filename=getattr(settings, 'ATTACHMENTS_CLAMD_UNIX_SOCKET_LOCATION', None))
-            virus = cd.scan_file(upload.file_path)
-            if virus is not None:
-                raise VirusFoundException('**WARNING** virus: "{}" found in the file: "{}", could not upload!'.format(virus[upload.file_path][1], upload.file_name))
-
 
 class Upload (models.Model):
     session = models.ForeignKey(Session, related_name='uploads', on_delete=models.CASCADE)

@@ -18,7 +18,7 @@ from .exceptions import FileSizeException, InvalidExtensionException, InvalidFil
 from .forms import PropertyForm
 from .models import Attachment, Session, Upload
 from .signals import file_download, file_uploaded, virus_detected
-from .utils import Centos7ClamdUnixSocket, ajax_only, get_storage, sizeof_fmt, url_filename, user_has_access, get_template_path
+from .utils import ajax_only, get_storage, sizeof_fmt, url_filename, user_has_access, get_template_path
 
 from datetime import datetime
 from io import BytesIO
@@ -142,28 +142,6 @@ class AttachView(ContextMixin, View):
             raise FileSizeException(
                 f"File is too large to be uploaded, file cannot be greater than { sizeof_fmt(max_file_size) }"
             )
-
-    def scan_clamd(self, path):
-        """
-        This function validates the file is free of viruses (if CLAMD is configured)
-        """
-
-        if getattr(settings, 'ATTACHMENTS_CLAMD', False):
-            # We should explore moving this import in the future
-            import pyclamd
-
-            clamd_network_settings = getattr(settings, 'ATTACHMENTS_CLAMD_NETWORK_SETTINGS', {})
-            # If network settings are provided we use them to establish a socket connection
-            if clamd_network_settings:
-                # ClamdNetworkSocket accepts 'host', 'port', and 'timeout' as keys in ATTACHMENTS_CLAMD_NETWORK_SETTINGS
-                cd = pyclamd.ClamdNetworkSocket(**clamd_network_settings)
-            else:
-                cd = Centos7ClamdUnixSocket(filename=getattr(settings, 'ATTACHMENTS_CLAMD_UNIX_SOCKET_LOCATION', None))
-            virus = cd.scan_file(path)
-            if virus is not None:
-                raise VirusFoundException(
-                    f'**WARNING** virus: "{virus[path][1]}" found in the file: "{self.file.name}", could not upload!'
-                )
 
     def set_session_data(self):
         # Update the data for this session (includes all form data for the attachments)
