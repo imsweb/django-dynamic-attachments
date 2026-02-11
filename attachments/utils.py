@@ -33,8 +33,17 @@ def get_context_key(context):
     return 'attachments'
 
 
-def session(request, template=get_template_path(filename='list.html'), context='', user=None, content_type=None,
-            allowed_file_extensions=None, allowed_file_types=None, unpack_zip_files=None):
+def session(
+        request,
+        template=get_template_path(filename='list.html'),
+        context='',
+        user=None,
+        content_type=None,
+        allowed_file_extensions=None,
+        max_file_size=None,
+        allowed_file_types=None,
+        unpack_zip_files=None,
+    ):
     from .models import Session
     try:
         key = get_context_key(context)
@@ -48,15 +57,25 @@ def session(request, template=get_template_path(filename='list.html'), context='
             content_type = ContentType.objects.get_for_model(content_type, for_concrete_model=False)
         if allowed_file_extensions is None:
             allowed_file_extensions = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_EXTENSIONS', '')
+        if max_file_size is None:
+            max_file_size = getattr(settings, "ATTACHMENTS_MAX_FILE_SIZE_BYTES", 52428800)
         if allowed_file_types is None:
             allowed_file_types = getattr(settings, 'ATTACHMENTS_ALLOWED_FILE_TYPES', '')
         if unpack_zip_files is None:
             unpack_zip_files = getattr(settings, 'ATTACHMENTS_UNPACK_ZIP_FILES', False)
         for _i in range(5):
             try:
-                s = Session.objects.create(user=user, uuid=uuid.uuid4().hex, template=template, context=context,
-                                           content_type=content_type, allowed_file_extensions=allowed_file_extensions,
-                                           allowed_file_types=allowed_file_types, unpack_zip_files=unpack_zip_files)
+                s = Session.objects.create(
+                    user=user,
+                    uuid=uuid.uuid4().hex,
+                    template=template,
+                    context=context,
+                    content_type=content_type,
+                    allowed_file_extensions=allowed_file_extensions,
+                    max_file_size=max_file_size,
+                    allowed_file_types=allowed_file_types,
+                    unpack_zip_files=unpack_zip_files,
+                )
                 s._request = request
                 return s
             except IntegrityError:
