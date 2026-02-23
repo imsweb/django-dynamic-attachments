@@ -188,7 +188,6 @@ class AttachView(ContextMixin, View):
 
             self.validate_extension(path)
             self.validate_max_size()
-            self.scan_clamd(path)
 
             upload = self.create_upload(path)
             self.set_session_data()
