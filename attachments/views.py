@@ -136,7 +136,7 @@ class AttachView(ContextMixin, View):
 
         # Verify the upload is not over the allowable limit
         # Defaults to 50Mb (in binary byte size)
-        max_file_size = getattr(settings, 'ATTACHMENTS_MAX_FILE_SIZE_BYTES', 52428800)
+        max_file_size = self.session.max_file_size or getattr(settings, 'ATTACHMENTS_MAX_FILE_SIZE_BYTES', 52428800)
         # max_file_size can be None (which means any size is allowed)
         if max_file_size and self.file.size > max_file_size:
             raise FileSizeException(
