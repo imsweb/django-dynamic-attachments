@@ -9,7 +9,7 @@ from django.utils.safestring import mark_safe
 
 from attachments.signals import attachments_attached
 from attachments.utils import JSONField, get_context_key, get_default_path, get_storage, import_class, sizeof_fmt
-from attachments.exceptions import VirusFoundException, InvalidExtensionException, InvalidFileTypeException, FileSizeException
+from attachments.exceptions import InvalidExtensionException, InvalidFileTypeException, FileSizeException
 
 import os
 import magic
