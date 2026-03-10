@@ -1,7 +1,6 @@
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files.move import file_move_safe
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import Q
 from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpResponse
@@ -14,13 +13,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import ContextMixin
 import magic
 
-from .exceptions import FileSizeException, InvalidExtensionException, InvalidFileTypeException, VirusFoundException
+from .exceptions import FileSizeException, InvalidExtensionException, InvalidFileTypeException
 from .forms import PropertyForm
 from .models import Attachment, Session, Upload
-from .signals import file_download, file_uploaded, virus_detected
-from .utils import Centos7ClamdUnixSocket, ajax_only, get_storage, sizeof_fmt, url_filename, user_has_access, get_template_path
+from .signals import file_download, file_uploaded
+from .utils import ajax_only, get_storage, sizeof_fmt, url_filename, user_has_access, get_template_path
 
-from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from wsgiref.util import FileWrapper
@@ -143,28 +141,6 @@ class AttachView(ContextMixin, View):
                 f"File is too large to be uploaded, file cannot be greater than { sizeof_fmt(max_file_size) }"
             )
 
-    def scan_clamd(self, path):
-        """
-        This function validates the file is free of viruses (if CLAMD is configured)
-        """
-
-        if getattr(settings, 'ATTACHMENTS_CLAMD', False):
-            # We should explore moving this import in the future
-            import pyclamd
-
-            clamd_network_settings = getattr(settings, 'ATTACHMENTS_CLAMD_NETWORK_SETTINGS', {})
-            # If network settings are provided we use them to establish a socket connection
-            if clamd_network_settings:
-                # ClamdNetworkSocket accepts 'host', 'port', and 'timeout' as keys in ATTACHMENTS_CLAMD_NETWORK_SETTINGS
-                cd = pyclamd.ClamdNetworkSocket(**clamd_network_settings)
-            else:
-                cd = Centos7ClamdUnixSocket(filename=getattr(settings, 'ATTACHMENTS_CLAMD_UNIX_SOCKET_LOCATION', None))
-            virus = cd.scan_file(path)
-            if virus is not None:
-                raise VirusFoundException(
-                    f'**WARNING** virus: "{virus[path][1]}" found in the file: "{self.file.name}", could not upload!'
-                )
-
     def set_session_data(self):
         # Update the data for this session (includes all form data for the attachments)
         for key, value in self.request.POST.items():
@@ -174,43 +150,12 @@ class AttachView(ContextMixin, View):
                 self.session.data = {key: value}
         self.session.save()
 
-    def handle_virus_found(self, upload, ex):
-        user = getattr(self.request, 'user', "Unknown user")
-        filename = upload.file_name
-        # If ATTACHMENTS_QUARANTINE_PATH is set, move the offending file to the quarantine, otherwise delete
-        attachments_quarantine_path = getattr(settings, 'ATTACHMENTS_QUARANTINE_PATH', None)
-        if attachments_quarantine_path:
-            quarantine_path = os.path.join(attachments_quarantine_path, os.path.basename(upload.file_path))
-            file_move_safe(os.path.basename(upload.file_path), quarantine_path)
-            quarantine_msg = f'File has been quarantined here: {quarantine_path}'
-        else:
-            os.remove(upload.file_path)
-            quarantine_path = None
-            quarantine_msg = 'File has been removed from the system'
-
-        error_msg = force_str(ex)
-        time_of_upload = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        log_message = f"{error_msg} - Uploaded by {user} at {time_of_upload}. {quarantine_msg}."
-        logger.exception(log_message)
-
-        virus_detected.send(
-            sender=upload,
-            user=user,
-            filename=filename,
-            exception=ex,
-            time_of_upload=time_of_upload,
-            quarantine_path=quarantine_path,
-        )
-
-        return JsonResponse({'ok': False, 'error': error_msg}, content_type=self.content_type)
-
     def handle_file_upload(self, request, *args, **kwargs):
         try:
             path = self.create_tmp_file()
 
             self.validate_extension(path)
             self.validate_max_size()
-            self.scan_clamd(path)
 
             upload = self.create_upload(path)
             self.set_session_data()
@@ -225,8 +170,6 @@ class AttachView(ContextMixin, View):
         # These errors have helpful messages, so we return them
         except (InvalidExtensionException, InvalidFileTypeException, FileSizeException) as ex:
             return JsonResponse({'ok': False, 'error': force_str(ex)}, content_type=self.content_type)
-        except VirusFoundException as ex:
-            return self.handle_virus_found(upload, ex)
         except ValidationError as ex:
             return JsonResponse({'ok': False, 'error': force_str(ex.message)}, content_type=self.content_type)
         except Exception:
