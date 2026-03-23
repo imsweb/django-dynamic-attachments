@@ -164,6 +164,7 @@ class Session (models.Model):
     content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.CASCADE)
     date_created = models.DateTimeField(default=timezone.now, editable=False)
     allowed_file_extensions = models.TextField(help_text='Whitespace-separated file extensions that are allowed for upload.', blank=True)
+    max_file_size = models.PositiveBigIntegerField(default=0)
     allowed_file_types = models.TextField(help_text='White list of file types that are allowed for upload, separated by new line. Used as a fallback if file mimetype is not known.', blank=True)
     unpack_zip_files = models.BooleanField(default=False, help_text='If True, .zip file members will be attached, instead of the .zip file itself.')
 
