@@ -16,13 +16,13 @@
                     <td>
                         <a href="{% url 'delete-upload' session_id=session.uuid upload_id=upload.pk %}"
                            class="delete-upload">
-                            {% block delete-upload %}Remove <span class="sr-only">{{ upload.file_name }}</span>{% endblock %}
+                            {% block delete-upload %}Remove <span class="visually-hidden">{{ upload.file_name }}</span>{% endblock delete-upload %}
                         </a>
                     </td>
                 </tr>
-                {% if property_form %}
+                {% if property_form and property_form.fields %}
                     <tr class="properties">
-                        <td colspan="3">{% include "attachments/form.html" with form=property_form %}</td>
+                        <td colspan="3">{% block form %}{% include "attachments/form.html" with form=property_form %}{% endblock form %}</td>
                     </tr>
                 {% endif %}
             </tbody>

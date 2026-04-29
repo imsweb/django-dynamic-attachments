@@ -16,11 +16,7 @@ jobs:
           python-version: 3.11
 
       - name: Install Checkers
-        run: pip install jake ruff djlint
-
-      - name: jake
-        run: jake ddt
-        continue-on-error: true
+        run: pip install ruff djlint
 
       - name: ruff
         run: ruff check .
@@ -54,8 +50,8 @@ jobs:
           python-version: 3.11
 
       - name: Install requirements
-        run: pip install "Django>=3.2.23,<=4.2.9" "coverage==7.4.1" "ims-bootstrap<6"
-          "pyclamd==0.4.0" "python-magic>=0.4.15"
+        run: pip install "Django>=5.2.13,<6" "coverage==7.13.5" "ims-bootstrap>=5.3.2,<6"
+          "python-magic>=0.4.27"
 
       - name: Run Tests (PostgreSQL)
         run: python manage.py test
