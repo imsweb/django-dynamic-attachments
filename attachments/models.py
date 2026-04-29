@@ -294,8 +294,10 @@ class Session (models.Model):
             if upload.file_size != 0:
                 file_mime = magic.from_file(upload.file_path, mime=True)
 
-                if (set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts)) and
-                    file_mime not in mime_types_overrides.get(ext, [])):
+                if (
+                    set(mimetypes.guess_all_extensions(file_mime)).isdisjoint(set(allowed_exts))
+                    and file_mime not in mime_types_overrides.get(ext, [])
+                ):
                     # In case our check for extensions didn't pass we check if the file type (not mimetype)
                     # is white-listed. If so, we can allow the file to be uploaded.
                     allowed_types = self.allowed_file_types.split('\n')
@@ -310,6 +312,7 @@ class Session (models.Model):
         # max_file_size can be None (which means any size is allowed)
         if max_file_size and upload.file_size > max_file_size:
             raise FileSizeException("File is too large to be uploaded, file cannot be greater than {}".format(sizeof_fmt(max_file_size)))
+
 
 class Upload (models.Model):
     session = models.ForeignKey(Session, related_name='uploads', on_delete=models.CASCADE)

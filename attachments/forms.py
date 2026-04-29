@@ -14,7 +14,6 @@ PROPERTY_FIELD_CLASSES = {
 }
 
 
-
 DEFAULT_FORM_CLASS = forms.CharField
 
 try:
@@ -26,7 +25,7 @@ try:
         'model': widgets.Select,
         'radio': widgets.RadioSelect,
         'boolean': widgets.CheckboxInput,
-        }
+    }
     DEFAULT_WIDGET_CLASS = widgets.TextInput
 except ImportError:
     PROPERTY_WIDGET_CLASSES = {
@@ -36,7 +35,7 @@ except ImportError:
         'model': forms.Select,
         'radio': forms.RadioSelect,
         'boolean': forms.CheckboxInput,
-        }
+    }
     DEFAULT_WIDGET_CLASS = forms.TextInput
 
 

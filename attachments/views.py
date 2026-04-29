@@ -50,8 +50,8 @@ class AttachView(ContextMixin, View):
     def sanitize_file_name(self):
         sanitized_chars = r'[<>()\';&"%/\\`]'
         sanitized_name = re.sub(sanitized_chars, '', self.file.name)
-        self.file.name = sanitized_name 
-    
+        self.file.name = sanitized_name
+
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
         self.session = get_object_or_404(Session, uuid=kwargs['session_id'])
@@ -326,6 +326,6 @@ def view_attachment_properties(request, attach_id):
     attachment = get_object_or_404(Attachment, pk=attach_id)
     if not user_has_access(request, attachment):
         raise Http404()
-    return render(request,   f'{template_path}view_properties.html', {
+    return render(request, f'{template_path}view_properties.html', {
         'att': attachment,
     })

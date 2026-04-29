@@ -18,6 +18,7 @@ def get_template_path(filename=''):
     prefix = 'attachments/bootstrap/' if apps.is_installed('bootstrap') else 'attachments/'
     return f'{prefix}{filename}'
 
+
 def sizeof_fmt(num, suffix='B'):
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
@@ -33,16 +34,16 @@ def get_context_key(context):
 
 
 def session(
-        request,
-        template=get_template_path(filename='list.html'),
-        context='',
-        user=None,
-        content_type=None,
-        allowed_file_extensions=None,
-        max_file_size=None,
-        allowed_file_types=None,
-        unpack_zip_files=None,
-    ):
+    request,
+    template=get_template_path(filename='list.html'),
+    context='',
+    user=None,
+    content_type=None,
+    allowed_file_extensions=None,
+    max_file_size=None,
+    allowed_file_types=None,
+    unpack_zip_files=None,
+):
     from attachments.models import Session
     try:
         key = get_context_key(context)
@@ -87,6 +88,7 @@ def get_storage():
     storage_class = import_string(cls_dict["BACKEND"])
     storage_options = cls_dict.get("OPTIONS", {})
     return storage_class(**storage_options)
+
 
 def get_default_path(upload, obj):
     ct = ContentType.objects.get_for_model(obj)
