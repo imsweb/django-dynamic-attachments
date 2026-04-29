@@ -1,4 +1,3 @@
-
 class InvalidExtensionException(Exception):
     """Exception raised for an attachment with an invalid extension"""
     pass

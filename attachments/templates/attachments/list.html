@@ -1,3 +1,4 @@
+{% load bootstrap %}
 {% if session.uploads.exists %}
     <table class="table table-condensed attachment-files-table">
         <thead>
@@ -14,20 +15,14 @@
                     <td>{{ upload.file_size|filesizeformat }}</td>
                     <td>
                         <a href="{% url 'delete-upload' session_id=session.uuid upload_id=upload.pk %}"
-                            class="delete-upload">
-                            {% block delete-upload %}
-                                Remove <span class="sr-only">{{ upload.file_name }}</span>
-                            {% endblock delete-upload %}
+                           class="delete-upload">
+                            {% block delete-upload %}Remove <span class="sr-only">{{ upload.file_name }}</span>{% endblock %}
                         </a>
                     </td>
                 </tr>
-                {% if property_form and property_form.fields %}
+                {% if property_form %}
                     <tr class="properties">
-                        <td colspan="3">
-                            {% block form %}
-                                {% include "attachments/form.html" with form=property_form %}
-                            {% endblock form %}
-                        </td>
+                        <td colspan="3">{% include "attachments/form.html" with form=property_form %}</td>
                     </tr>
                 {% endif %}
             </tbody>

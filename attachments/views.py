@@ -13,11 +13,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import ContextMixin
 import magic
 
-from .exceptions import FileSizeException, InvalidExtensionException, InvalidFileTypeException
-from .forms import PropertyForm
-from .models import Attachment, Session, Upload
-from .signals import file_download, file_uploaded
-from .utils import ajax_only, get_storage, sizeof_fmt, url_filename, user_has_access, get_template_path
+from attachments.exceptions import FileSizeException, InvalidExtensionException, InvalidFileTypeException
+from attachments.forms import PropertyForm
+from attachments.models import Attachment, Session, Upload
+from attachments.signals import file_download, file_uploaded
+from attachments.utils import ajax_only, get_storage, sizeof_fmt, url_filename, user_has_access, get_template_path
 
 from io import BytesIO
 from pathlib import Path

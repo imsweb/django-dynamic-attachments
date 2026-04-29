@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import storages
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, models
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from django.utils.module_loading import import_string
 from os.path import exists
 from urllib.parse import quote
@@ -44,7 +44,7 @@ def session(
         allowed_file_types=None,
         unpack_zip_files=None,
     ):
-    from .models import Session
+    from attachments.models import Session
     try:
         key = get_context_key(context)
         s = Session.objects.prefetch_related('uploads').get(uuid=request.POST[key])

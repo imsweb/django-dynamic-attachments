@@ -149,7 +149,7 @@ class Property (models.Model):
         if hasattr(ModelClass, 'field_model_queryset'):
             try:
                 qs = getattr(ModelClass, 'field_model_queryset')(**kwargs)
-            except:
+            except Exception:
                 qs = getattr(ModelClass, 'field_model_queryset')()
         else:
             qs = ModelClass.objects.all()
@@ -234,7 +234,7 @@ class Session (models.Model):
     def is_valid(self):
         if not self.content_type:
             return True
-        from .forms import PropertyForm
+        from attachments.forms import PropertyForm
         valids = []
         for upload in self.uploads.all():
             property_form = PropertyForm(self._request.POST, instance=upload, editable_only=False)
@@ -247,7 +247,7 @@ class Session (models.Model):
 
     @property
     def upload_forms(self):
-        from .forms import PropertyForm
+        from attachments.forms import PropertyForm
         for upload in self.uploads.all():
             kwargs = {'instance': upload, 'editable_only': False, }
             is_bound = (self._request is not None and (self._request.method == 'POST' or self._request.GET.get('bind-form-data', False)))
