@@ -7,7 +7,6 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, models
 from django.http import Http404
 from django.utils.module_loading import import_string
-from os.path import exists
 from urllib.parse import quote
 from django.apps import apps
 import importlib
