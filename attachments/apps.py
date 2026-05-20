@@ -9,7 +9,7 @@ class AttachmentsConfig(AppConfig):
         # otherwise fall back to checking request.user.is_authenticated by
         # default.
         obj = attachment.content_object
-        
+
         if hasattr(obj, 'can_download'):
             return obj.can_download(request, attachment)
 

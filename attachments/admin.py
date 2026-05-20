@@ -1,8 +1,8 @@
 from django import forms
 from django.contrib import admin
 
-from .models import Attachment, Property, Session, Upload
-from .utils import import_class
+from attachments.models import Attachment, Property, Session, Upload
+from attachments.utils import import_class
 
 
 @admin.register(Attachment)
@@ -40,5 +40,3 @@ class UploadInline (admin.TabularInline):
 class SessionAdmin (admin.ModelAdmin):
     list_display = ('uuid', 'user', 'template', 'context', 'date_created')
     inlines = (UploadInline,)
-
-
