@@ -24,6 +24,7 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
+    "django>=5.2.14,<6",
     "python-magic-bin;platform_system==\"Windows\"",
     "python-magic;platform_system!=\"Windows\"",
 ]
@@ -31,6 +32,9 @@ dependencies = [
 [project.optional-dependencies]
 bootstrap = [
     "ims-bootstrap>=5.3.2,<6",
+]
+test = [
+    "coverage==7.13.5",
 ]
 
 [project.urls]

@@ -1,5 +1,0 @@
-Django>=5.2.13,<6
-coverage==7.13.5
-ims-bootstrap>=5.3.2,<6
-python-magic>=0.4.27
-python-magic-bin>=0.4.14
