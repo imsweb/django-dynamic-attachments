@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16-alpine@sha256:d8c54117c24479e0a05b31f7743d8704cfec5ba2604618da44df7d6dfa1cc79e
+        image: postgres:16-alpine
         env:
           POSTGRES_DB: django-dynamic-attachments
           POSTGRES_PASSWORD: django-dynamic-attachments-secret
