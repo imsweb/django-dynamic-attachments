@@ -24,17 +24,30 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
+    "django>=5.2.14,<6",
     "python-magic-bin;platform_system==\"Windows\"",
     "python-magic;platform_system!=\"Windows\"",
 ]
 
 [project.optional-dependencies]
 bootstrap = [
-    "ims-bootstrap>=5.0,<6.0",
+    "ims-bootstrap>=5.3.2,<6",
+]
+test = [
+    "coverage==7.13.5",
 ]
 
 [project.urls]
 Homepage = "https://github.com/imsweb/django-dynamic-attachments"
+
+[tool.djlint]
+profile = "django"
+indent = 4
+use_gitignore = true
+blank_line_after_tag = "extends,load,endfor,endblock,endwith,include"
+max_line_length = 120
+include = "H017"
+close_void_tags = true
 
 [tool.hatch.version]
 path = "attachments/__init__.py"

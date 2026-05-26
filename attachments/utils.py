@@ -5,9 +5,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.storage import storages
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import IntegrityError, models
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from django.utils.module_loading import import_string
-from os.path import exists
 from urllib.parse import quote
 from django.apps import apps
 import importlib
@@ -18,6 +17,7 @@ import uuid
 def get_template_path(filename=''):
     prefix = 'attachments/bootstrap/' if apps.is_installed('bootstrap') else 'attachments/'
     return f'{prefix}{filename}'
+
 
 def sizeof_fmt(num, suffix='B'):
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
@@ -34,17 +34,17 @@ def get_context_key(context):
 
 
 def session(
-        request,
-        template=get_template_path(filename='list.html'),
-        context='',
-        user=None,
-        content_type=None,
-        allowed_file_extensions=None,
-        max_file_size=None,
-        allowed_file_types=None,
-        unpack_zip_files=None,
-    ):
-    from .models import Session
+    request,
+    template=get_template_path(filename='list.html'),
+    context='',
+    user=None,
+    content_type=None,
+    allowed_file_extensions=None,
+    max_file_size=None,
+    allowed_file_types=None,
+    unpack_zip_files=None,
+):
+    from attachments.models import Session
     try:
         key = get_context_key(context)
         s = Session.objects.prefetch_related('uploads').get(uuid=request.POST[key])
@@ -88,6 +88,7 @@ def get_storage():
     storage_class = import_string(cls_dict["BACKEND"])
     storage_options = cls_dict.get("OPTIONS", {})
     return storage_class(**storage_options)
+
 
 def get_default_path(upload, obj):
     ct = ContentType.objects.get_for_model(obj)
