@@ -1,8 +1,8 @@
 from django import template
 from django.contrib.contenttypes.models import ContentType
 
-from attachments.forms import PropertyForm
-from attachments.models import Property
+from ..forms import PropertyForm
+from ..models import Property
 
 
 register = template.Library()

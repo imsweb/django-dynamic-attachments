@@ -1,15 +1,6 @@
 from setuptools import find_packages, setup
 
 import attachments
-import os
-import re
-
-
-def get_installs():
-    with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as fp:
-        return [
-            line.rstrip() for line in fp.readlines() if not re.match(r"(\n.*)", line) and not re.match(r"(#.*)", line)
-        ]
 
 
 setup(
@@ -22,7 +13,11 @@ setup(
     license='BSD',
     packages=find_packages(exclude=('testapp',)),
     include_package_data=True,
-    install_requires=get_installs(),
+    install_requires=[
+        'pyclamd',
+        'python-magic;platform_system!="Windows"',
+        'python-magic-bin;platform_system=="Windows"',
+    ],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
