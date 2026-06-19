@@ -118,7 +118,9 @@ class Attachment (models.Model):
             Added for use in bootstrap's template tag render_value. Returns tuple of property label and value
         """
         if prop.data_type == 'model' and prop.slug in self.data:
-            return prop.label, prop.model_queryset().get(pk=self.data.get(prop.slug, [])[0])
+            pk = self.data.get(prop.slug, [])[0]
+            value = prop.model_queryset().get(pk=self.data.get(prop.slug, [])[0]) if pk else ''
+            return prop.label, value
         else:
             return prop.label, self.data.get(prop.slug, [])
 
